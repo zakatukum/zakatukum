@@ -22,7 +22,7 @@ function getHijriYear(gregYear) {
   return h.year;
 }
 
-const ORGS = 
+const ORGS = [
   { id: 1, name: "Islamic Relief USA", desc: "Nationwide relief, zakat-verified", flag: "🇺🇸", method: "stripe", cat: "Relief" },
   { id: 2, name: "ICNA Relief", desc: "Domestic poverty relief, food pantries", flag: "🇺🇸", method: "stripe", cat: "Poverty" },
   { id: 3, name: "Zakat Foundation of America", desc: "Dedicated zakat distribution", flag: "🇺🇸", method: "stripe", cat: "Zakat" },
