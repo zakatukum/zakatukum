@@ -1850,6 +1850,28 @@ export default function ZakatukumPreview() {
             <div style={{direction: lang === "ar" || lang === "ur" ? "rtl" : "ltr"}}>
               <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#1B5E20" }}>{t("pay_zakat")}</h2>
               <p style={{ margin: "0 0 12px", fontSize: 13, color: "#999" }}>Send zakat directly to verified organizations {country === "GLOBAL" ? "worldwide" : `in ${countryInfo.name}`}</p>
+
+              {/* Zakat Payment Fee Warning */}
+              <div style={{ padding: "14px 18px", marginBottom: 16, borderRadius: 10, background: "linear-gradient(135deg, #FFF8E1, #FFF3E0)", border: "1px solid #FFB74D", fontSize: 13, lineHeight: 1.6 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <span style={{ fontSize: 20, flexShrink: 0 }}>⚠️</span>
+                  <div>
+                    <p style={{ margin: "0 0 6px", fontWeight: 700, color: "#E65100", fontSize: 14 }}>Important: Payment Processing Fees</p>
+                    <p style={{ margin: "0 0 8px", color: "#5D4037" }}>
+                      Online payment processors (like Stripe) charge fees (~2.9% + $0.30 per transaction).
+                      According to Islamic rulings, <strong style={{ color: "#BF360C" }}>zakat must reach the recipient in full</strong> — processing fees cannot be deducted from the zakat amount.
+                    </p>
+                    <p style={{ margin: "0 0 8px", color: "#5D4037" }}>
+                      <strong>Recommended:</strong> Pay the organization directly through their website or bank transfer to avoid any fees.
+                      If you pay through Stripe, <strong>you (the donor) must absorb the processing fee</strong> as a separate voluntary cost — it is not part of your zakat.
+                    </p>
+                    <p style={{ margin: 0, color: "#2E7D32", fontWeight: 600, fontSize: 12 }}>
+                      Tip: Use the "I Paid Directly" button below to record your payment without any fees.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div style={{ padding: "10px 14px", marginBottom: 16, borderRadius: 8, background: "#E3F2FD", border: "1px solid #90CAF9", fontSize: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span><span style={{ fontWeight: 700, color: "#1565C0" }}>{countryInfo.flag} {countryInfo.name}</span> — Showing {countryOrgs.length} verified organizations and {countryBanks.length} local banks</span>
                 <select value={country} onChange={e => { const c = e.target.value; setCountry(c); if (COUNTRY_CURRENCY[c]) setCurrency(COUNTRY_CURRENCY[c]); }} style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #90CAF9", background: "#fff", fontSize: 11, cursor: "pointer" }}>
@@ -1895,7 +1917,10 @@ export default function ZakatukumPreview() {
                         <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: "#E8F5E9", color: "#1B5E20", fontWeight: 700 }}>✓ Zakat Verified</span>
                       </div>
                     </div>
-                    <button onClick={() => openPay(org)} style={{ ...S.greenBtn, fontSize: 13, padding: "8px 18px", whiteSpace: "nowrap" }}>Pay →</button>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
+                      <button onClick={() => openPay(org)} style={{ ...S.greenBtn, fontSize: 12, padding: "7px 14px", whiteSpace: "nowrap" }}>Pay via Stripe →</button>
+                      <button onClick={() => { setSelectedOrg(org); setPayAmount(Math.max(0, remaining).toFixed(2)); setPayMethod(""); setPayStep(2); setShowPayModal(true); }} style={{ padding: "7px 14px", borderRadius: 8, border: "2px solid #2E7D32", background: "#fff", color: "#2E7D32", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>✓ I Paid Directly</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -2098,6 +2123,10 @@ export default function ZakatukumPreview() {
                   <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 8 }}>{t("method")}</label>
                   {selectedOrg?.method === "stripe" ? (
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {/* Stripe fee warning inside modal */}
+                      <div style={{ padding: "10px 14px", borderRadius: 8, background: "#FFF8E1", border: "1px solid #FFB74D", fontSize: 12, color: "#5D4037", lineHeight: 1.5 }}>
+                        <span style={{ fontWeight: 700, color: "#E65100" }}>⚠️ Fee Notice:</span> Stripe charges ~2.9% + $0.30. This fee <strong>cannot</strong> be deducted from your zakat. You must absorb it as a separate cost. Consider paying the organization directly to avoid fees.
+                      </div>
                       {[["card", "💳", "Credit / Debit Card", "Visa, Mastercard, Amex"], ["ach", "🏦", "Bank Transfer (ACH)", "Direct from your bank"]].map(([id, icon, title, sub]) => (
                         <div key={id} onClick={() => setPayMethod(id)} style={{ padding: "12px 16px", borderRadius: 10, border: `2px solid ${payMethod === id ? "#635BFF" : "#e0e0e0"}`, background: payMethod === id ? "#F5F3FF" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
                           <span style={{ fontSize: 22 }}>{icon}</span>
@@ -2168,18 +2197,29 @@ export default function ZakatukumPreview() {
             {payStep === 2 && (
               <div style={{ padding: "40px 24px", textAlign: "center" }}>
                 <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#E8F5E9", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 32 }}>✓</div>
-                <h3 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 800, color: "#1B5E20" }}>Payment Recorded!</h3>
-                <p style={{ margin: "0 0 20px", fontSize: 13, color: "#888" }}>May Allah accept your zakat</p>
-                <div style={{ background: "#f8f9fa", borderRadius: 12, padding: "16px 20px", textAlign: "left", marginBottom: 20 }}>
-                  {[["Amount", `$${payAmount}`], ["Recipient", selectedOrg?.name], ["Method", selectedOrg?.method === "stripe" ? "Stripe" : "Wire Transfer"], ["Confirmation", `ZAK-${Date.now().toString(36).toUpperCase()}`], ["Date", new Date().toLocaleDateString()]].map(([k, v], i) => (
+                <h3 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 800, color: "#1B5E20" }}>Zakat Payment Recorded!</h3>
+                <p style={{ margin: "0 0 20px", fontSize: 13, color: "#888" }}>May Allah accept your zakat — تقبل الله منكم</p>
+                <div style={{ background: "#f8f9fa", borderRadius: 12, padding: "16px 20px", textAlign: "left", marginBottom: 16 }}>
+                  {[["Amount", `$${payAmount}`], ["Recipient", selectedOrg?.name], ["Method", payStep === 2 && !payMethod ? "Paid Directly (No Fees)" : selectedOrg?.method === "stripe" ? "Stripe (Fees Apply)" : "Wire Transfer"], ["Confirmation", `ZAK-${Date.now().toString(36).toUpperCase()}`], ["Date", new Date().toLocaleDateString()]].map(([k, v], i) => (
                     <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: i < 4 ? "1px solid #e8e8e8" : "none", fontSize: 13 }}>
                       <span style={{ color: "#888" }}>{k}</span><span style={{ fontWeight: 600 }}>{v}</span>
                     </div>
                   ))}
                 </div>
+                {/* Show green badge for direct payment */}
+                {!payMethod && (
+                  <div style={{ padding: "10px 14px", marginBottom: 16, borderRadius: 8, background: "#E8F5E9", border: "1px solid #A5D6A7", fontSize: 12, color: "#1B5E20", fontWeight: 600 }}>
+                    ✓ No processing fees — 100% of your zakat reached the recipient
+                  </div>
+                )}
+                {payMethod && selectedOrg?.method === "stripe" && (
+                  <div style={{ padding: "10px 14px", marginBottom: 16, borderRadius: 8, background: "#FFF8E1", border: "1px solid #FFB74D", fontSize: 12, color: "#5D4037" }}>
+                    ⚠️ Stripe processing fee (~2.9% + $0.30) was charged separately. This fee is <strong>not</strong> part of your zakat obligation.
+                  </div>
+                )}
                 <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
                   <button style={{ ...S.headerBtn, color: "#333", border: "1px solid #ddd" }}>🖨 Print Receipt</button>
-                  <button onClick={() => setShowPayModal(false)} style={S.greenBtn}>Done</button>
+                  <button onClick={() => { setShowPayModal(false); setPayMethod("card"); }} style={S.greenBtn}>Done</button>
                 </div>
               </div>
             )}
