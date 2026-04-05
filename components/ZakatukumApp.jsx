@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from "recharts";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 // ─── Hijri Date Utilities ───
 const HIJRI_EPOCH = 1948439.5;
@@ -476,6 +476,9 @@ const MADHAB_RULES = {
 };
 
 export default function ZakatukumPreview() {
+  // Get Supabase client (lazy init — ensures env vars are available at runtime)
+  const supabase = getSupabase();
+
   // Auth state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authMode, setAuthMode] = useState("login"); // "login" or "signup"
@@ -598,7 +601,7 @@ export default function ZakatukumPreview() {
 
   // ─── Load zakat data from Supabase when logged in ───
   useEffect(() => {
-    if (!isLoggedIn || !session) return;
+    if (!isLoggedIn || !session || !supabase) return;
     const loadData = async () => {
       const { data, error } = await supabase
         .from("zakat_years")
@@ -641,7 +644,7 @@ export default function ZakatukumPreview() {
 
   // ─── Auto-save zakat data to Supabase (debounced) ───
   const saveToSupabase = useCallback(async (yearKey, data) => {
-    if (!session || !userId) return;
+    if (!session || !userId || !supabase) return;
     const [greg, hijri] = yearKey.split("-").map(Number);
     if (!greg || !hijri) return;
     const payload = {
@@ -754,7 +757,7 @@ export default function ZakatukumPreview() {
 
   // ─── Save profile preferences when they change ───
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !supabase) return;
     const timer = setTimeout(() => {
       supabase.from("profiles").update({ country, currency, madhab, lang }).eq("id", userId);
     }, 1000);
