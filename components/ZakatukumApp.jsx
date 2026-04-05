@@ -550,9 +550,54 @@ export default function ZakatukumPreview() {
     rental: { monthlyIncome: 0, expenses: 0, months: 12 },
   };
 
-  const [yearlyData, setYearlyData] = useState({
-    [defaultYearKey]: { ...emptyYearData }
-  });
+  // ─── Historical sample data (5 years) ───
+  const historicalData = {
+    [`${currentGreg}-${currentHijri}`]: { ...emptyYearData },
+    [`${currentGreg - 1}-${currentHijri - 1}`]: {
+      ...emptyYearData, goldPrice: 72, cash: 15200, inv: 32000, gold: 45, paid: 1575, due: 1575,
+      manualEntries: { ...emptyYearData.manualEntries, businessInventory: "8500", debtsOwed: [{ person: "Ahmad", amount: "3000", expectedDate: "2025-06" }] },
+      rental: { monthlyIncome: 1800, expenses: 400, months: 12 },
+      payments: [
+        { date: "2025-03-12", recipient: "Islamic Relief USA", method: "Zelle", amount: 800 },
+        { date: "2025-06-20", recipient: "Zakat Foundation", method: "Paid Directly", amount: 775 },
+      ],
+    },
+    [`${currentGreg - 2}-${currentHijri - 2}`]: {
+      ...emptyYearData, goldPrice: 65, cash: 12800, inv: 28500, gold: 40, paid: 1350, due: 1350,
+      manualEntries: { ...emptyYearData.manualEntries, businessInventory: "6000" },
+      rental: { monthlyIncome: 1600, expenses: 350, months: 12 },
+      payments: [
+        { date: "2024-04-01", recipient: "ICNA Relief", method: "PayPal", amount: 700 },
+        { date: "2024-07-15", recipient: "Muslim Aid UK", method: "Wire Transfer", amount: 650 },
+      ],
+    },
+    [`${currentGreg - 3}-${currentHijri - 3}`]: {
+      ...emptyYearData, goldPrice: 58, cash: 9500, inv: 22000, gold: 35, paid: 1050, due: 1050,
+      manualEntries: { ...emptyYearData.manualEntries, businessInventory: "4200" },
+      rental: { monthlyIncome: 1400, expenses: 300, months: 12 },
+      payments: [
+        { date: "2023-03-28", recipient: "Helping Hand (HHRD)", method: "Credit Card", amount: 550 },
+        { date: "2023-08-10", recipient: "Islamic Relief Canada", method: "Paid Directly", amount: 500 },
+      ],
+    },
+    [`${currentGreg - 4}-${currentHijri - 4}`]: {
+      ...emptyYearData, goldPrice: 55, cash: 7200, inv: 18000, gold: 30, paid: 800, due: 800,
+      manualEntries: { ...emptyYearData.manualEntries, businessInventory: "3000" },
+      rental: { monthlyIncome: 1200, expenses: 250, months: 12 },
+      payments: [
+        { date: "2022-04-15", recipient: "National Zakat Foundation", method: "Bank Transfer", amount: 800 },
+      ],
+    },
+    [`${currentGreg - 5}-${currentHijri - 5}`]: {
+      ...emptyYearData, goldPrice: 50, cash: 5000, inv: 12000, gold: 25, paid: 575, due: 575,
+      manualEntries: { ...emptyYearData.manualEntries, businessInventory: "2000" },
+      payments: [
+        { date: "2021-05-02", recipient: "Muslim Hands", method: "Paid Directly", amount: 575 },
+      ],
+    },
+  };
+
+  const [yearlyData, setYearlyData] = useState(historicalData);
   const [selectedYear, setSelectedYear] = useState(defaultYearKey);
 
   const [showPayModal, setShowPayModal] = useState(false);
@@ -582,6 +627,10 @@ export default function ZakatukumPreview() {
   };
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  // Report customization
+  const [reportYear, setReportYear] = useState("all"); // "all" or a specific yearKey
+  const [reportSections, setReportSections] = useState({ summary: true, breakdown: true, payments: true, historical: true, chart: true });
+  const toggleReportSection = (key) => setReportSections(prev => ({ ...prev, [key]: !prev[key] }));
 
   // ─── Mobile sidebar responsiveness ───
   const [isMobile, setIsMobile] = useState(false);
@@ -2165,12 +2214,37 @@ export default function ZakatukumPreview() {
             </div>
           )}
 
-          {view === "report" && (
+          {view === "report" && (() => {
+            // Compute report data based on selected year(s)
+            const reportYears = reportYear === "all"
+              ? Object.keys(yearlyData).sort((a, b) => b.localeCompare(a))
+              : [reportYear];
+            const reportData = reportYears.map(yk => {
+              const d = yearlyData[yk] || emptyYearData;
+              const goldVal = d.gold * (d.goldPrice || 0);
+              const biz = parseFloat(d.manualEntries?.businessInventory) || 0;
+              const debts = (d.manualEntries?.debtsOwed || []).reduce((s, x) => s + (parseFloat(x.amount) || 0), 0);
+              const other = (d.manualEntries?.otherAssets || []).reduce((s, x) => s + (parseFloat(x.value) || 0), 0);
+              const rentalNet = Math.max(0, (d.rental?.monthlyIncome || 0) - (d.rental?.expenses || 0)) * (d.rental?.months || 12);
+              const miningVal = (d.mining?.minerals || 0) + (d.mining?.rikaz || 0);
+              const wealth = d.cash + d.inv + goldVal + biz + debts + other + rentalNet + miningVal;
+              const due = d.due || wealth * 0.025;
+              const paid = d.paid || 0;
+              return { yearKey: yk, data: d, goldVal, biz, debts, other, rentalNet, miningVal, wealth, due, paid, remaining: due - paid, payments: d.payments || [] };
+            });
+            const totalAllWealth = reportData.reduce((s, r) => s + r.wealth, 0);
+            const totalAllDue = reportData.reduce((s, r) => s + r.due, 0);
+            const totalAllPaid = reportData.reduce((s, r) => s + r.paid, 0);
+            const totalAllRemaining = totalAllDue - totalAllPaid;
+            const allPayments = reportData.flatMap(r => r.payments.map(p => ({ ...p, year: formatYearDisplay(r.yearKey) })));
+
+            return (
             <div style={{direction: lang === "ar" || lang === "ur" ? "rtl" : "ltr"}}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              {/* Report Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
                 <div>
-                  <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#1B5E20" }}>{t("report")} — {formatYearDisplay(selectedYear)}</h2>
-                  <p style={{ margin: 0, fontSize: 13, color: "#999" }}>Annual Zakat Calculation Report</p>
+                  <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#1B5E20" }}>Zakat Report</h2>
+                  <p style={{ margin: 0, fontSize: 13, color: "#999" }}>{reportYear === "all" ? `All Years (${reportYears.length} years)` : formatYearDisplay(reportYear)}</p>
                 </div>
                 <div style={{ display: "flex", gap: 10 }}>
                   <button onClick={() => window.print()} style={{ ...S.headerBtn, color: "#333", border: "1px solid #ddd", background: "#fff", padding: "8px 16px", borderRadius: 8 }}>🖨 Print</button>
@@ -2178,90 +2252,224 @@ export default function ZakatukumPreview() {
                 </div>
               </div>
 
-              <SectionCard title="Summary" color="#1B5E20">
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                  {[
-                    ["Total Wealth", fmtFull(totalWealth), "#1B5E20"],
-                    ["Zakat Due (2.5%)", fmtFull(zakatDue), "#E65100"],
-                    ["Total Paid", fmtFull(totalPaid), "#1565C0"],
-                    ["Remaining", fmtFull(Math.max(0, remaining)), remaining <= 0 ? "#2E7D32" : "#C62828"],
-                  ].map(([label, value, color], i) => (
-                    <div key={i} style={{ textAlign: "center", padding: "16px 12px", background: "#f8f9fa", borderRadius: 10 }}>
-                      <p style={{ margin: "0 0 4px", fontSize: 11, color: "#888", fontWeight: 600, textTransform: "uppercase" }}>{label}</p>
-                      <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color }}>{value}</p>
+              {/* ─── Customize Report Panel ─── */}
+              <SectionCard title="Customize Report" color="#455A64">
+                <div style={{ display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap" }}>
+                  {/* Year Selector */}
+                  <div style={{ minWidth: 200 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Year Range</label>
+                    <select value={reportYear} onChange={e => setReportYear(e.target.value)} style={{ ...S.input, padding: "10px 14px", cursor: "pointer" }}>
+                      <option value="all">All Years ({Object.keys(yearlyData).length} years)</option>
+                      {Object.keys(yearlyData).sort((a, b) => b.localeCompare(a)).map(yk => (
+                        <option key={yk} value={yk}>{formatYearDisplay(yk)}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {/* Section Toggles */}
+                  <div style={{ flex: 1, minWidth: 300 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Include Sections</label>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {[
+                        ["summary", "Summary"],
+                        ["breakdown", "Wealth Breakdown"],
+                        ["payments", "Payment History"],
+                        ["historical", "Historical Comparison"],
+                        ["chart", "Trend Chart"],
+                      ].map(([key, label]) => (
+                        <label key={key} onClick={() => toggleReportSection(key)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 8, border: `2px solid ${reportSections[key] ? "#1B5E20" : "#e0e0e0"}`, background: reportSections[key] ? "#E8F5E9" : "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, color: reportSections[key] ? "#1B5E20" : "#999", transition: "all 0.15s" }}>
+                          {reportSections[key] ? "✓" : "○"} {label}
+                        </label>
+                      ))}
                     </div>
-                  ))}
+                  </div>
                 </div>
               </SectionCard>
 
-              <SectionCard title="Wealth Breakdown" color="#2E7D32">
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr>
-                      <th style={S.th}>Category</th>
-                      <th style={{ ...S.th, textAlign: "right" }}>Amount</th>
-                      <th style={{ ...S.th, textAlign: "right" }}>Zakat (2.5%)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              {/* ─── Summary Cards ─── */}
+              {reportSections.summary && (
+                <SectionCard title="Summary" color="#1B5E20">
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16 }}>
                     {[
-                      ["Cash & Liquid Assets", currentYearData.cash, currentYearData.cash * 0.025],
-                      ["Gold & Jewelry", currentYearData.gold * (currentYearData.goldPrice || 0), currentYearData.gold * (currentYearData.goldPrice || 0) * 0.025],
-                      ["Investments", currentYearData.inv, currentYearData.inv * 0.025],
-                      ["Business Inventory", parseFloat(currentYearData.manualEntries.businessInventory) || 0, (parseFloat(currentYearData.manualEntries.businessInventory) || 0) * 0.025],
-                      ["Debts Owed to You", currentYearData.manualEntries.debtsOwed.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0), currentYearData.manualEntries.debtsOwed.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0) * 0.025],
-                      ["Other Assets", currentYearData.manualEntries.otherAssets.reduce((s, a) => s + (parseFloat(a.value) || 0), 0), currentYearData.manualEntries.otherAssets.reduce((s, a) => s + (parseFloat(a.value) || 0), 0) * 0.025],
-                      ["Rental Income (Net)", Math.max(0, (currentYearData.rental.monthlyIncome - currentYearData.rental.expenses) * currentYearData.rental.months), Math.max(0, (currentYearData.rental.monthlyIncome - currentYearData.rental.expenses) * currentYearData.rental.months) * 0.025],
-                      ["Mining & Minerals", currentYearData.mining.minerals + currentYearData.mining.rikaz, (currentYearData.mining.minerals + currentYearData.mining.rikaz) * 0.025],
-                    ].map(([cat, amt, zakat], i) => (
-                      <tr key={i}>
-                        <td style={S.td}>{cat}</td>
-                        <td style={{ ...S.td, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmtFull(amt)}</td>
-                        <td style={{ ...S.td, textAlign: "right", fontWeight: 600, color: "#1B5E20", fontVariantNumeric: "tabular-nums" }}>{fmtFull(zakat)}</td>
-                      </tr>
+                      ["Total Wealth", fmtFull(reportYear === "all" ? totalAllWealth : reportData[0]?.wealth || 0), "#1B5E20"],
+                      ["Zakat Due", fmtFull(reportYear === "all" ? totalAllDue : reportData[0]?.due || 0), "#E65100"],
+                      ["Total Paid", fmtFull(reportYear === "all" ? totalAllPaid : reportData[0]?.paid || 0), "#1565C0"],
+                      ["Remaining", fmtFull(Math.max(0, reportYear === "all" ? totalAllRemaining : reportData[0]?.remaining || 0)), (reportYear === "all" ? totalAllRemaining : reportData[0]?.remaining || 0) <= 0 ? "#2E7D32" : "#C62828"],
+                    ].map(([label, value, color], i) => (
+                      <div key={i} style={{ textAlign: "center", padding: "16px 12px", background: "#f8f9fa", borderRadius: 10 }}>
+                        <p style={{ margin: "0 0 4px", fontSize: 11, color: "#888", fontWeight: 600, textTransform: "uppercase" }}>{label}</p>
+                        <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color }}>{value}</p>
+                      </div>
                     ))}
-                    <tr style={{ fontWeight: 700, background: "#e8f5e9" }}>
-                      <td style={{ ...S.td, fontWeight: 700 }}>Total</td>
-                      <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{fmtFull(totalWealth)}</td>
-                      <td style={{ ...S.td, textAlign: "right", fontWeight: 700, color: "#1B5E20" }}>{fmtFull(zakatDue)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </SectionCard>
+                  </div>
+                  {reportYear === "all" && <p style={{ margin: "12px 0 0", fontSize: 11, color: "#888", textAlign: "center" }}>Aggregated across {reportYears.length} years</p>}
+                </SectionCard>
+              )}
 
-              <SectionCard title="Payment History" color="#1565C0">
-                {currentYearData.payments && currentYearData.payments.length > 0 ? (
+              {/* ─── Wealth Breakdown (per year) ─── */}
+              {reportSections.breakdown && reportData.map((rd, ri) => (
+                <SectionCard key={ri} title={`Wealth Breakdown — ${formatYearDisplay(rd.yearKey)}`} color="#2E7D32">
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
                       <tr>
-                        <th style={S.th}>Date</th>
-                        <th style={S.th}>Recipient</th>
-                        <th style={S.th}>Method</th>
+                        <th style={S.th}>Category</th>
                         <th style={{ ...S.th, textAlign: "right" }}>Amount</th>
+                        <th style={{ ...S.th, textAlign: "right" }}>Zakat (2.5%)</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {currentYearData.payments.map((p, i) => (
-                        <tr key={i}>
-                          <td style={S.td}>{p.date}</td>
-                          <td style={S.td}>{p.recipient}</td>
-                          <td style={S.td}>{p.method}</td>
-                          <td style={{ ...S.td, textAlign: "right", fontWeight: 600 }}>{fmtFull(p.amount)}</td>
+                      {[
+                        ["Cash & Liquid Assets", rd.data.cash],
+                        ["Gold & Jewelry", rd.goldVal],
+                        ["Investments", rd.data.inv],
+                        ["Business Inventory", rd.biz],
+                        ["Debts Owed to You", rd.debts],
+                        ["Other Assets", rd.other],
+                        ["Rental Income (Net)", rd.rentalNet],
+                        ["Mining & Minerals", rd.miningVal],
+                      ].map(([cat, amt], i) => (
+                        <tr key={i} style={{ opacity: amt === 0 ? 0.4 : 1 }}>
+                          <td style={S.td}>{cat}</td>
+                          <td style={{ ...S.td, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmtFull(amt)}</td>
+                          <td style={{ ...S.td, textAlign: "right", fontWeight: 600, color: "#1B5E20", fontVariantNumeric: "tabular-nums" }}>{fmtFull(amt * 0.025)}</td>
                         </tr>
                       ))}
+                      <tr style={{ fontWeight: 700, background: "#e8f5e9" }}>
+                        <td style={{ ...S.td, fontWeight: 700 }}>Total</td>
+                        <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{fmtFull(rd.wealth)}</td>
+                        <td style={{ ...S.td, textAlign: "right", fontWeight: 700, color: "#1B5E20" }}>{fmtFull(rd.due)}</td>
+                      </tr>
                     </tbody>
                   </table>
-                ) : (
-                  <p style={{ margin: 0, fontSize: 13, color: "#999", textAlign: "center", padding: "20px 0" }}>No payments recorded for this year</p>
-                )}
-              </SectionCard>
+                </SectionCard>
+              ))}
 
+              {/* ─── Historical Comparison Table ─── */}
+              {reportSections.historical && reportData.length > 1 && (
+                <SectionCard title="Historical Comparison" color="#7B1FA2">
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr>
+                        <th style={S.th}>Year</th>
+                        <th style={{ ...S.th, textAlign: "right" }}>Wealth</th>
+                        <th style={{ ...S.th, textAlign: "right" }}>Gold (g)</th>
+                        <th style={{ ...S.th, textAlign: "right" }}>Cash</th>
+                        <th style={{ ...S.th, textAlign: "right" }}>Investments</th>
+                        <th style={{ ...S.th, textAlign: "right" }}>Zakat Due</th>
+                        <th style={{ ...S.th, textAlign: "right" }}>Paid</th>
+                        <th style={{ ...S.th, textAlign: "center" }}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reportData.map((rd, i) => {
+                        const prevWealth = reportData[i + 1]?.wealth;
+                        const growth = prevWealth ? ((rd.wealth - prevWealth) / prevWealth * 100).toFixed(1) : null;
+                        return (
+                          <tr key={i}>
+                            <td style={{ ...S.td, fontWeight: 700 }}>{formatYearDisplay(rd.yearKey)}</td>
+                            <td style={{ ...S.td, textAlign: "right" }}>
+                              {fmtFull(rd.wealth)}
+                              {growth && <span style={{ display: "block", fontSize: 10, color: parseFloat(growth) >= 0 ? "#2E7D32" : "#C62828", fontWeight: 600 }}>{parseFloat(growth) >= 0 ? "▲" : "▼"} {Math.abs(growth)}%</span>}
+                            </td>
+                            <td style={{ ...S.td, textAlign: "right" }}>{rd.data.gold}g</td>
+                            <td style={{ ...S.td, textAlign: "right" }}>{fmt(rd.data.cash)}</td>
+                            <td style={{ ...S.td, textAlign: "right" }}>{fmt(rd.data.inv)}</td>
+                            <td style={{ ...S.td, textAlign: "right", color: "#E65100", fontWeight: 600 }}>{fmtFull(rd.due)}</td>
+                            <td style={{ ...S.td, textAlign: "right", color: "#1565C0", fontWeight: 600 }}>{fmtFull(rd.paid)}</td>
+                            <td style={{ ...S.td, textAlign: "center" }}>
+                              <span style={{ fontSize: 11, padding: "2px 10px", borderRadius: 6, fontWeight: 700, background: rd.remaining <= 0 ? "#E8F5E9" : "#FFF3E0", color: rd.remaining <= 0 ? "#1B5E20" : "#E65100" }}>
+                                {rd.remaining <= 0 ? "✓ Paid" : `${fmt(rd.remaining)} left`}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      <tr style={{ fontWeight: 700, background: "#F3E5F5" }}>
+                        <td style={{ ...S.td, fontWeight: 700 }}>Totals</td>
+                        <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{fmtFull(totalAllWealth)}</td>
+                        <td style={{ ...S.td, textAlign: "right" }}>{reportData.reduce((s, r) => s + r.data.gold, 0)}g</td>
+                        <td style={{ ...S.td, textAlign: "right" }}>{fmt(reportData.reduce((s, r) => s + r.data.cash, 0))}</td>
+                        <td style={{ ...S.td, textAlign: "right" }}>{fmt(reportData.reduce((s, r) => s + r.data.inv, 0))}</td>
+                        <td style={{ ...S.td, textAlign: "right", fontWeight: 700, color: "#E65100" }}>{fmtFull(totalAllDue)}</td>
+                        <td style={{ ...S.td, textAlign: "right", fontWeight: 700, color: "#1565C0" }}>{fmtFull(totalAllPaid)}</td>
+                        <td style={{ ...S.td, textAlign: "center" }}>
+                          <span style={{ fontSize: 11, padding: "2px 10px", borderRadius: 6, fontWeight: 700, background: totalAllRemaining <= 0 ? "#E8F5E9" : "#FFF3E0", color: totalAllRemaining <= 0 ? "#1B5E20" : "#E65100" }}>
+                            {totalAllRemaining <= 0 ? "✓ All Paid" : `${fmt(totalAllRemaining)} owed`}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </SectionCard>
+              )}
+
+              {/* ─── Trend Chart ─── */}
+              {reportSections.chart && reportData.length > 1 && (
+                <SectionCard title="Wealth & Zakat Trend" color="#0D47A1">
+                  <div style={{ height: 280 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={[...reportData].reverse().map(rd => ({ name: formatYearDisplay(rd.yearKey), Wealth: rd.wealth, Due: rd.due, Paid: rd.paid }))}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} tickFormatter={v => fmtShort(v)} />
+                        <Tooltip formatter={v => fmtFull(v)} />
+                        <Legend />
+                        <Bar dataKey="Wealth" fill="#1B5E20" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="Due" fill="#E65100" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="Paid" fill="#1565C0" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </SectionCard>
+              )}
+
+              {/* ─── All Payments ─── */}
+              {reportSections.payments && (
+                <SectionCard title={`Payment History${reportYear === "all" ? " (All Years)" : ""}`} color="#1565C0">
+                  {allPayments.length > 0 ? (
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                      <thead>
+                        <tr>
+                          {reportYear === "all" && <th style={S.th}>Year</th>}
+                          <th style={S.th}>Date</th>
+                          <th style={S.th}>Recipient</th>
+                          <th style={S.th}>Method</th>
+                          <th style={{ ...S.th, textAlign: "right" }}>Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allPayments.map((p, i) => (
+                          <tr key={i}>
+                            {reportYear === "all" && <td style={{ ...S.td, fontWeight: 600, fontSize: 12 }}>{p.year}</td>}
+                            <td style={S.td}>{p.date}</td>
+                            <td style={S.td}>{p.recipient}</td>
+                            <td style={S.td}>
+                              <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: p.method === "Paid Directly" ? "#E8F5E9" : "#FFF3E0", color: p.method === "Paid Directly" ? "#1B5E20" : "#E65100", fontWeight: 600 }}>
+                                {p.method}
+                              </span>
+                            </td>
+                            <td style={{ ...S.td, textAlign: "right", fontWeight: 600 }}>{fmtFull(p.amount)}</td>
+                          </tr>
+                        ))}
+                        <tr style={{ fontWeight: 700, background: "#E3F2FD" }}>
+                          <td colSpan={reportYear === "all" ? 4 : 3} style={{ ...S.td, fontWeight: 700 }}>Total Paid</td>
+                          <td style={{ ...S.td, textAlign: "right", fontWeight: 700, color: "#1565C0" }}>{fmtFull(allPayments.reduce((s, p) => s + (p.amount || 0), 0))}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: 13, color: "#999", textAlign: "center", padding: "20px 0" }}>No payments recorded</p>
+                  )}
+                </SectionCard>
+              )}
+
+              {/* ─── Footer ─── */}
               <div style={{ textAlign: "center", padding: "20px 0", color: "#ccc", fontSize: 12 }}>
-                <p>Generated by Zakatukum (زكاتكم) on {new Date().toLocaleDateString()}</p>
+                <p>Generated by Zakatukum (زكاتكم) on {new Date().toLocaleDateString()} — {reportYear === "all" ? `${reportYears.length}-year report` : `Single year: ${formatYearDisplay(reportYear)}`}</p>
                 <p>This report is for personal record-keeping. Consult a qualified scholar for specific rulings.</p>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {view === "settings" && (
             <div style={{direction: lang === "ar" || lang === "ur" ? "rtl" : "ltr"}}>
