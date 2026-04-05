@@ -10,9 +10,64 @@ function jdnToHijri(jdn) { const l = Math.floor(jdn - HIJRI_EPOCH) + 10632; cons
 const HIJRI_MONTHS = ["Muharram","Safar","Rabi al-Awwal","Rabi al-Thani","Jumada al-Ula","Jumada al-Thani","Rajab","Sha'ban","Ramadan","Shawwal","Dhul Qi'dah","Dhul Hijjah"];
 function getHijriString(date) { const jdn = gregorianToJDN(date.getFullYear(), date.getMonth() + 1, date.getDate()); const h = jdnToHijri(jdn); return `${h.day} ${HIJRI_MONTHS[h.month - 1]} ${h.year} AH`; }
 
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0);
-const fmtFull = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n || 0);
-const fmtShort = (n) => { if (n >= 1000000) return `$${(n/1000000).toFixed(1)}M`; if (n >= 1000) return `$${(n/1000).toFixed(1)}K`; return fmt(n); };
+// ─── Currency Definitions (40 major currencies) ───
+const CURRENCIES = [
+  { code: "USD", name: "US Dollar", symbol: "$", locale: "en-US", flag: "🇺🇸" },
+  { code: "EUR", name: "Euro", symbol: "€", locale: "de-DE", flag: "🇪🇺" },
+  { code: "GBP", name: "British Pound", symbol: "£", locale: "en-GB", flag: "🇬🇧" },
+  { code: "SAR", name: "Saudi Riyal", symbol: "﷼", locale: "ar-SA", flag: "🇸🇦" },
+  { code: "AED", name: "UAE Dirham", symbol: "د.إ", locale: "ar-AE", flag: "🇦🇪" },
+  { code: "QAR", name: "Qatari Riyal", symbol: "ر.ق", locale: "ar-QA", flag: "🇶🇦" },
+  { code: "KWD", name: "Kuwaiti Dinar", symbol: "د.ك", locale: "ar-KW", flag: "🇰🇼" },
+  { code: "BHD", name: "Bahraini Dinar", symbol: "د.ب", locale: "ar-BH", flag: "🇧🇭" },
+  { code: "OMR", name: "Omani Rial", symbol: "ر.ع", locale: "ar-OM", flag: "🇴🇲" },
+  { code: "PKR", name: "Pakistani Rupee", symbol: "₨", locale: "en-PK", flag: "🇵🇰" },
+  { code: "INR", name: "Indian Rupee", symbol: "₹", locale: "en-IN", flag: "🇮🇳" },
+  { code: "BDT", name: "Bangladeshi Taka", symbol: "৳", locale: "bn-BD", flag: "🇧🇩" },
+  { code: "IDR", name: "Indonesian Rupiah", symbol: "Rp", locale: "id-ID", flag: "🇮🇩" },
+  { code: "MYR", name: "Malaysian Ringgit", symbol: "RM", locale: "ms-MY", flag: "🇲🇾" },
+  { code: "TRY", name: "Turkish Lira", symbol: "₺", locale: "tr-TR", flag: "🇹🇷" },
+  { code: "EGP", name: "Egyptian Pound", symbol: "£", locale: "ar-EG", flag: "🇪🇬" },
+  { code: "MAD", name: "Moroccan Dirham", symbol: "د.م.", locale: "ar-MA", flag: "🇲🇦" },
+  { code: "NGN", name: "Nigerian Naira", symbol: "₦", locale: "en-NG", flag: "🇳🇬" },
+  { code: "ZAR", name: "South African Rand", symbol: "R", locale: "en-ZA", flag: "🇿🇦" },
+  { code: "KES", name: "Kenyan Shilling", symbol: "KSh", locale: "en-KE", flag: "🇰🇪" },
+  { code: "JPY", name: "Japanese Yen", symbol: "¥", locale: "ja-JP", flag: "🇯🇵" },
+  { code: "CNY", name: "Chinese Yuan", symbol: "¥", locale: "zh-CN", flag: "🇨🇳" },
+  { code: "KRW", name: "South Korean Won", symbol: "₩", locale: "ko-KR", flag: "🇰🇷" },
+  { code: "SGD", name: "Singapore Dollar", symbol: "S$", locale: "en-SG", flag: "🇸🇬" },
+  { code: "AUD", name: "Australian Dollar", symbol: "A$", locale: "en-AU", flag: "🇦🇺" },
+  { code: "CAD", name: "Canadian Dollar", symbol: "C$", locale: "en-CA", flag: "🇨🇦" },
+  { code: "CHF", name: "Swiss Franc", symbol: "CHF", locale: "de-CH", flag: "🇨🇭" },
+  { code: "SEK", name: "Swedish Krona", symbol: "kr", locale: "sv-SE", flag: "🇸🇪" },
+  { code: "NOK", name: "Norwegian Krone", symbol: "kr", locale: "nb-NO", flag: "🇳🇴" },
+  { code: "DKK", name: "Danish Krone", symbol: "kr", locale: "da-DK", flag: "🇩🇰" },
+  { code: "PLN", name: "Polish Zloty", symbol: "zł", locale: "pl-PL", flag: "🇵🇱" },
+  { code: "BRL", name: "Brazilian Real", symbol: "R$", locale: "pt-BR", flag: "🇧🇷" },
+  { code: "MXN", name: "Mexican Peso", symbol: "$", locale: "es-MX", flag: "🇲🇽" },
+  { code: "ARS", name: "Argentine Peso", symbol: "$", locale: "es-AR", flag: "🇦🇷" },
+  { code: "COP", name: "Colombian Peso", symbol: "$", locale: "es-CO", flag: "🇨🇴" },
+  { code: "IQD", name: "Iraqi Dinar", symbol: "ع.د", locale: "ar-IQ", flag: "🇮🇶" },
+  { code: "JOD", name: "Jordanian Dinar", symbol: "د.ا", locale: "ar-JO", flag: "🇯🇴" },
+  { code: "LBP", name: "Lebanese Pound", symbol: "ل.ل", locale: "ar-LB", flag: "🇱🇧" },
+  { code: "SDG", name: "Sudanese Pound", symbol: "ج.س", locale: "ar-SD", flag: "🇸🇩" },
+  { code: "THB", name: "Thai Baht", symbol: "฿", locale: "th-TH", flag: "🇹🇭" },
+];
+
+// Group currencies by region for the dropdown
+const CURRENCY_GROUPS = {
+  "Gulf & Middle East": ["SAR", "AED", "QAR", "KWD", "BHD", "OMR", "IQD", "JOD", "LBP", "EGP"],
+  "South & Southeast Asia": ["PKR", "INR", "BDT", "IDR", "MYR", "SGD", "THB"],
+  "Americas": ["USD", "CAD", "BRL", "MXN", "ARS", "COP"],
+  "Europe": ["EUR", "GBP", "CHF", "TRY", "SEK", "NOK", "DKK", "PLN"],
+  "Africa": ["NGN", "ZAR", "KES", "MAD", "SDG"],
+  "East Asia & Pacific": ["JPY", "CNY", "KRW", "AUD"],
+};
+
+// Placeholder formatters (will be overridden inside component with actual currency)
+let fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0);
+let fmtFull = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n || 0);
+let fmtShort = (n) => { if (n >= 1000000) return `$${(n/1000000).toFixed(1)}M`; if (n >= 1000) return `$${(n/1000).toFixed(1)}K`; return fmt(n); };
 
 // ─── Data (add your own values) ───
 // Hijri year calculation helper
@@ -250,6 +305,13 @@ export default function ZakatukumPreview() {
   const [view, setView] = useState("dashboard");
   const [lang, setLang] = useState("en");
   const [madhab, setMadhab] = useState("hanafi");
+  const [currency, setCurrency] = useState("USD");
+
+  // Currency-aware formatters
+  const currencyInfo = CURRENCIES.find(c => c.code === currency) || CURRENCIES[0];
+  fmt = (n) => { try { return new Intl.NumberFormat(currencyInfo.locale, { style: "currency", currency: currencyInfo.code, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0); } catch { return `${currencyInfo.symbol}${Math.round(n || 0).toLocaleString()}`; } };
+  fmtFull = (n) => { try { return new Intl.NumberFormat(currencyInfo.locale, { style: "currency", currency: currencyInfo.code, minimumFractionDigits: 2 }).format(n || 0); } catch { return `${currencyInfo.symbol}${(n || 0).toFixed(2)}`; } };
+  fmtShort = (n) => { const s = currencyInfo.symbol; if (n >= 1000000) return `${s}${(n/1000000).toFixed(1)}M`; if (n >= 1000) return `${s}${(n/1000).toFixed(1)}K`; return fmt(n); };
 
   // Initialize with current year
   const currentGreg = new Date().getFullYear();
@@ -671,6 +733,13 @@ export default function ZakatukumPreview() {
             <option value="de">Deutsch</option>
             <option value="bn">বাংলা</option>
           </select>
+          <select value={currency} onChange={e => setCurrency(e.target.value)} style={{ ...S.yearSelect, maxWidth: 130 }}>
+            {Object.entries(CURRENCY_GROUPS).map(([group, codes]) => (
+              <optgroup key={group} label={group}>
+                {codes.map(code => { const c = CURRENCIES.find(x => x.code === code); return c ? <option key={code} value={code}>{c.flag} {code}</option> : null; })}
+              </optgroup>
+            ))}
+          </select>
           <select value={madhab} onChange={e => setMadhab(e.target.value)} style={{ ...S.yearSelect, maxWidth: 150 }}>
             <optgroup label="Sunni">
               <option value="hanafi">Hanafi</option>
@@ -886,7 +955,7 @@ export default function ZakatukumPreview() {
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 20 }}>
                 <div style={{ ...S.card, padding: "14px 18px" }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Gold Price ($/gram)</label>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Gold Price ({currencyInfo.symbol}/gram)</label>
                   <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
                     <input value={currentYearData.goldPrice} onChange={e => updateCurrentYear("goldPrice", parseFloat(e.target.value) || 0)} style={{ ...S.input, ...S.numInput, flex: 1, fontSize: 20, fontWeight: 700, color: "#1B5E20", background: "#FFF8E1" }} />
                     <button style={{ ...S.headerBtn, background: "#e8f5e9", color: "#2E7D32", border: "1px solid #C8E6C9" }}>⟳ Live</button>
@@ -1033,7 +1102,7 @@ export default function ZakatukumPreview() {
 
                 <SectionCard title="Cash at Home" color="#1B5E20">
                   <div style={{ marginBottom: 12 }}>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 4, display: "block" }}>Amount (USD)</label>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 4, display: "block" }}>Amount ({currency})</label>
                     <input
                       value={currentYearData.manualEntries.cashHome}
                       onChange={e => updateManualEntry("cashHome", e.target.value)}
