@@ -481,17 +481,20 @@ export default function ZakatukumPreview() {
 
   // Auth state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [authMode, setAuthMode] = useState("login"); // "login" or "signup"
+  const [authMode, setAuthMode] = useState("login"); // "login", "signup", "reset", or "update-password"
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authName, setAuthName] = useState("");
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [authChecking, setAuthChecking] = useState(true); // true while checking session on mount
+  const [authSuccess, setAuthSuccess] = useState(""); // success message for reset flow
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [userId, setUserId] = useState(null);
   const [session, setSession] = useState(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [view, setView] = useState("dashboard");
   const [lang, setLang] = useState("en");
@@ -560,6 +563,12 @@ export default function ZakatukumPreview() {
   // ─── Check session on mount & listen for auth changes ───
   useEffect(() => {
     if (!supabase) { setAuthChecking(false); return; }
+
+    // Check if this is a password reset callback
+    if (typeof window !== "undefined" && window.location.search.includes("reset=true")) {
+      setAuthMode("update-password");
+    }
+
     // Check existing session
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       if (s?.user) {
@@ -679,6 +688,55 @@ export default function ZakatukumPreview() {
     }, 2000); // 2 second debounce
     return () => clearTimeout(timer);
   }, [yearlyData, selectedYear, isLoggedIn, session, saveToSupabase]);
+
+  // ─── Password reset handler ───
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    setAuthError("");
+    setAuthSuccess("");
+    setAuthLoading(true);
+
+    if (!authEmail) { setAuthError("Please enter your email"); setAuthLoading(false); return; }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(authEmail, {
+        redirectTo: window.location.origin + "/?reset=true",
+      });
+      if (error) throw error;
+      setAuthSuccess("Check your email for a password reset link");
+      setAuthEmail("");
+    } catch (err) {
+      setAuthError(err.message || "Failed to send reset email");
+    }
+    setAuthLoading(false);
+  };
+
+  // ─── Password update handler ───
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault();
+    setAuthError("");
+    setAuthSuccess("");
+    setAuthLoading(true);
+
+    if (!newPassword || !confirmPassword) { setAuthError("Please fill in all fields"); setAuthLoading(false); return; }
+    if (newPassword.length < 6) { setAuthError("Password must be at least 6 characters"); setAuthLoading(false); return; }
+    if (newPassword !== confirmPassword) { setAuthError("Passwords do not match"); setAuthLoading(false); return; }
+
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setAuthSuccess("Password updated successfully!");
+      setTimeout(() => {
+        setAuthMode("login");
+        setNewPassword("");
+        setConfirmPassword("");
+        setAuthSuccess("");
+      }, 1500);
+    } catch (err) {
+      setAuthError(err.message || "Failed to update password");
+    }
+    setAuthLoading(false);
+  };
 
   // ─── Auth handler (real Supabase auth) ───
   const handleAuth = async (e) => {
@@ -1028,96 +1086,149 @@ export default function ZakatukumPreview() {
 
           {/* Auth Card */}
           <div style={{ background: "#fff", borderRadius: 16, padding: "32px 28px", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
-            {/* Tabs */}
-            <div style={{ display: "flex", marginBottom: 24, borderRadius: 10, background: "#f5f5f5", padding: 3 }}>
-              {["login", "signup"].map(mode => (
-                <button key={mode} onClick={() => { setAuthMode(mode); setAuthError(""); }} style={{ flex: 1, padding: "10px 0", borderRadius: 8, border: "none", fontSize: 14, fontWeight: 600, cursor: "pointer", background: authMode === mode ? "#fff" : "transparent", color: authMode === mode ? "#1B5E20" : "#999", boxShadow: authMode === mode ? "0 1px 4px rgba(0,0,0,0.1)" : "none", transition: "all 0.2s" }}>
-                  {mode === "login" ? "Sign In" : "Create Account"}
-                </button>
-              ))}
-            </div>
+            {/* Tabs - hide for reset/update-password modes */}
+            {authMode !== "reset" && authMode !== "update-password" && (
+              <div style={{ display: "flex", marginBottom: 24, borderRadius: 10, background: "#f5f5f5", padding: 3 }}>
+                {["login", "signup"].map(mode => (
+                  <button key={mode} onClick={() => { setAuthMode(mode); setAuthError(""); setAuthSuccess(""); }} style={{ flex: 1, padding: "10px 0", borderRadius: 8, border: "none", fontSize: 14, fontWeight: 600, cursor: "pointer", background: authMode === mode ? "#fff" : "transparent", color: authMode === mode ? "#1B5E20" : "#999", boxShadow: authMode === mode ? "0 1px 4px rgba(0,0,0,0.1)" : "none", transition: "all 0.2s" }}>
+                    {mode === "login" ? "Sign In" : "Create Account"}
+                  </button>
+                ))}
+              </div>
+            )}
 
-            <form onSubmit={handleAuth}>
-              {authMode === "signup" && (
+            {/* PASSWORD RESET FORM */}
+            {authMode === "reset" && (
+              <form onSubmit={handlePasswordReset}>
+                <p style={{ margin: "0 0 20px", textAlign: "center", fontSize: 14, color: "#666" }}>Enter your email to receive a password reset link</p>
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Full Name</label>
-                  <input value={authName} onChange={e => setAuthName(e.target.value)} placeholder="Your full name" style={{ ...S.input, padding: "12px 14px", fontSize: 15 }} />
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Email</label>
+                  <input type="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="you@example.com" style={{ ...S.input, padding: "12px 14px", fontSize: 15 }} />
                 </div>
-              )}
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Email</label>
-                <input type="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="you@example.com" style={{ ...S.input, padding: "12px 14px", fontSize: 15 }} />
-              </div>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Password</label>
-                <input type="password" value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="••••••••" style={{ ...S.input, padding: "12px 14px", fontSize: 15 }} />
-              </div>
 
-              {authMode === "signup" && (
-                <div style={{ marginBottom: 20 }}>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>School of Thought (Madhab)</label>
-                  <select value={madhab} onChange={e => setMadhab(e.target.value)} style={{ ...S.input, padding: "12px 14px", fontSize: 14, cursor: "pointer" }}>
-                    <optgroup label="Sunni Schools">
-                      <option value="hanafi">Hanafi — حنفي</option>
-                      <option value="maliki">Maliki — مالكي</option>
-                      <option value="shafii">Shafi'i — شافعي</option>
-                      <option value="hanbali">Hanbali — حنبلي</option>
-                    </optgroup>
-                    <optgroup label="Shia Schools">
-                      <option value="jafari">Ja'fari (Twelver) — جعفري</option>
-                      <option value="zaydi">Zaydi — زيدي</option>
-                    </optgroup>
-                    <optgroup label="Other">
-                      <option value="salafi">Salafi / Ahl al-Hadith — أهل الحديث</option>
-                    </optgroup>
-                  </select>
-                  <p style={{ margin: "6px 0 0", fontSize: 11, color: "#888" }}>{MADHABS.find(m => m.id === madhab)?.desc} — Zakat calculations will follow this school's rulings</p>
+                {authError && <p style={{ margin: "0 0 16px", fontSize: 13, color: "#C62828", fontWeight: 600 }}>{authError}</p>}
+                {authSuccess && <p style={{ margin: "0 0 16px", fontSize: 13, color: "#1B5E20", fontWeight: 600 }}>{authSuccess}</p>}
+
+                <button type="submit" disabled={authLoading} style={{ ...S.greenBtn, width: "100%", padding: "14px 0", fontSize: 16, borderRadius: 10, opacity: authLoading ? 0.7 : 1 }}>
+                  {authLoading ? "Please wait..." : "Send Reset Link"}
+                </button>
+
+                <p style={{ margin: "16px 0 0", textAlign: "center", fontSize: 13, color: "#888" }}>
+                  <span onClick={() => { setAuthMode("login"); setAuthError(""); setAuthEmail(""); }} style={{ cursor: "pointer", color: "#1B5E20", fontWeight: 600 }}>Back to Sign In</span>
+                </p>
+              </form>
+            )}
+
+            {/* PASSWORD UPDATE FORM */}
+            {authMode === "update-password" && (
+              <form onSubmit={handlePasswordUpdate}>
+                <p style={{ margin: "0 0 20px", textAlign: "center", fontSize: 14, color: "#666" }}>Create a new password for your account</p>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>New Password</label>
+                  <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="••••••••" style={{ ...S.input, padding: "12px 14px", fontSize: 15 }} />
                 </div>
-              )}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Confirm Password</label>
+                  <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" style={{ ...S.input, padding: "12px 14px", fontSize: 15 }} />
+                </div>
 
-              {authMode === "signup" && (
-                <div style={{ marginBottom: 20 }}>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Country</label>
-                  <select value={country} onChange={e => { const c = e.target.value; setCountry(c); if (COUNTRY_CURRENCY[c]) setCurrency(COUNTRY_CURRENCY[c]); }} style={{ ...S.input, padding: "12px 14px", fontSize: 14, cursor: "pointer" }}>
-                    <option value="GLOBAL">🌍 International / Global</option>
-                    {Object.entries(COUNTRIES.reduce((groups, c) => { if (c.code !== "GLOBAL") { (groups[c.region] = groups[c.region] || []).push(c); } return groups; }, {})).map(([region, countries]) => (
-                      <optgroup key={region} label={region}>
-                        {countries.map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
+                {authError && <p style={{ margin: "0 0 16px", fontSize: 13, color: "#C62828", fontWeight: 600 }}>{authError}</p>}
+                {authSuccess && <p style={{ margin: "0 0 16px", fontSize: 13, color: "#1B5E20", fontWeight: 600 }}>{authSuccess}</p>}
+
+                <button type="submit" disabled={authLoading} style={{ ...S.greenBtn, width: "100%", padding: "14px 0", fontSize: 16, borderRadius: 10, opacity: authLoading ? 0.7 : 1 }}>
+                  {authLoading ? "Please wait..." : "Update Password"}
+                </button>
+              </form>
+            )}
+
+            {/* LOGIN / SIGNUP FORM */}
+            {(authMode === "login" || authMode === "signup") && (
+              <form onSubmit={handleAuth}>
+                {authMode === "signup" && (
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Full Name</label>
+                    <input value={authName} onChange={e => setAuthName(e.target.value)} placeholder="Your full name" style={{ ...S.input, padding: "12px 14px", fontSize: 15 }} />
+                  </div>
+                )}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Email</label>
+                  <input type="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="you@example.com" style={{ ...S.input, padding: "12px 14px", fontSize: 15 }} />
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Password</label>
+                  <input type="password" value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="••••••••" style={{ ...S.input, padding: "12px 14px", fontSize: 15 }} />
+                </div>
+
+                {authMode === "signup" && (
+                  <div style={{ marginBottom: 20 }}>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>School of Thought (Madhab)</label>
+                    <select value={madhab} onChange={e => setMadhab(e.target.value)} style={{ ...S.input, padding: "12px 14px", fontSize: 14, cursor: "pointer" }}>
+                      <optgroup label="Sunni Schools">
+                        <option value="hanafi">Hanafi — حنفي</option>
+                        <option value="maliki">Maliki — مالكي</option>
+                        <option value="shafii">Shafi'i — شافعي</option>
+                        <option value="hanbali">Hanbali — حنبلي</option>
                       </optgroup>
-                    ))}
-                  </select>
-                  <p style={{ margin: "6px 0 0", fontSize: 11, color: "#888" }}>Shows local banks and zakat charities for your country</p>
-                </div>
-              )}
+                      <optgroup label="Shia Schools">
+                        <option value="jafari">Ja'fari (Twelver) — جعفري</option>
+                        <option value="zaydi">Zaydi — زيدي</option>
+                      </optgroup>
+                      <optgroup label="Other">
+                        <option value="salafi">Salafi / Ahl al-Hadith — أهل الحديث</option>
+                      </optgroup>
+                    </select>
+                    <p style={{ margin: "6px 0 0", fontSize: 11, color: "#888" }}>{MADHABS.find(m => m.id === madhab)?.desc} — Zakat calculations will follow this school's rulings</p>
+                  </div>
+                )}
 
-              {authError && <p style={{ margin: "0 0 16px", fontSize: 13, color: "#C62828", fontWeight: 600 }}>{authError}</p>}
+                {authMode === "signup" && (
+                  <div style={{ marginBottom: 20 }}>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Country</label>
+                    <select value={country} onChange={e => { const c = e.target.value; setCountry(c); if (COUNTRY_CURRENCY[c]) setCurrency(COUNTRY_CURRENCY[c]); }} style={{ ...S.input, padding: "12px 14px", fontSize: 14, cursor: "pointer" }}>
+                      <option value="GLOBAL">🌍 International / Global</option>
+                      {Object.entries(COUNTRIES.reduce((groups, c) => { if (c.code !== "GLOBAL") { (groups[c.region] = groups[c.region] || []).push(c); } return groups; }, {})).map(([region, countries]) => (
+                        <optgroup key={region} label={region}>
+                          {countries.map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
+                        </optgroup>
+                      ))}
+                    </select>
+                    <p style={{ margin: "6px 0 0", fontSize: 11, color: "#888" }}>Shows local banks and zakat charities for your country</p>
+                  </div>
+                )}
 
-              <button type="submit" disabled={authLoading} style={{ ...S.greenBtn, width: "100%", padding: "14px 0", fontSize: 16, borderRadius: 10, opacity: authLoading ? 0.7 : 1 }}>
-                {authLoading ? "Please wait..." : authMode === "login" ? "Sign In" : "Create Account"}
-              </button>
-            </form>
+                {authError && <p style={{ margin: "0 0 16px", fontSize: 13, color: "#C62828", fontWeight: 600 }}>{authError}</p>}
+
+                <button type="submit" disabled={authLoading} style={{ ...S.greenBtn, width: "100%", padding: "14px 0", fontSize: 16, borderRadius: 10, opacity: authLoading ? 0.7 : 1 }}>
+                  {authLoading ? "Please wait..." : authMode === "login" ? "Sign In" : "Create Account"}
+                </button>
+              </form>
+            )}
 
             {authMode === "login" && (
               <p style={{ margin: "16px 0 0", textAlign: "center", fontSize: 13, color: "#888" }}>
-                <span style={{ cursor: "pointer", color: "#1B5E20", fontWeight: 600 }}>Forgot password?</span>
+                <span onClick={() => { setAuthMode("reset"); setAuthError(""); setAuthSuccess(""); }} style={{ cursor: "pointer", color: "#1B5E20", fontWeight: 600 }}>Forgot password?</span>
               </p>
             )}
 
-            {/* Divider */}
-            <div style={{ display: "flex", alignItems: "center", margin: "24px 0", gap: 12 }}>
-              <div style={{ flex: 1, height: 1, background: "#e0e0e0" }} />
-              <span style={{ fontSize: 12, color: "#bbb" }}>or continue with</span>
-              <div style={{ flex: 1, height: 1, background: "#e0e0e0" }} />
-            </div>
+            {/* Divider - hide for reset/update-password modes */}
+            {authMode !== "reset" && authMode !== "update-password" && (
+              <>
+                <div style={{ display: "flex", alignItems: "center", margin: "24px 0", gap: 12 }}>
+                  <div style={{ flex: 1, height: 1, background: "#e0e0e0" }} />
+                  <span style={{ fontSize: 12, color: "#bbb" }}>or continue with</span>
+                  <div style={{ flex: 1, height: 1, background: "#e0e0e0" }} />
+                </div>
 
-            {/* Social Login */}
-            <div style={{ display: "flex", gap: 10 }}>
-              {[["google", "Google", "G"], ["apple", "Apple", ""]].map(([provider, name, icon]) => (
-                <button key={provider} onClick={() => handleSocialLogin(provider)} style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "1px solid #e0e0e0", background: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: "#333" }}>
-                  <span style={{ fontSize: 16 }}>{icon}</span> {name}
-                </button>
-              ))}
-            </div>
+                {/* Social Login */}
+                <div style={{ display: "flex", gap: 10 }}>
+                  {[["google", "Google", "G"], ["apple", "Apple", ""]].map(([provider, name, icon]) => (
+                    <button key={provider} onClick={() => handleSocialLogin(provider)} style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "1px solid #e0e0e0", background: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: "#333" }}>
+                      <span style={{ fontSize: 16 }}>{icon}</span> {name}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           <p style={{ textAlign: "center", marginTop: 20, fontSize: 12, color: "rgba(255,255,255,0.4)" }}>By signing up, you agree to our Terms of Service and Privacy Policy</p>
