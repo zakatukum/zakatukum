@@ -614,16 +614,16 @@ export default function ZakatukumPreview() {
                             <td style={{ ...S.td, fontSize: 12 }}>{g.name}</td>
                             <td style={{ ...S.td, textAlign: "right", fontSize: 12 }}>{g.wt}g</td>
                             <td style={{ ...S.td, textAlign: "right", fontSize: 12, color: "#1B5E20", fontWeight: 600 }}>{g.net}g</td>
-                            <td style={{ ...S.td, textAlign: "right", fontSize: 12 }}>{fmt(g.net * curData.goldPrice)}</td>
-                            <td style={{ ...S.td, textAlign: "right", fontSize: 12, color: "#2E7D32", fontWeight: 600 }}>{fmt(g.net * curData.goldPrice * 0.025)}</td>
+                            <td style={{ ...S.td, textAlign: "right", fontSize: 12 }}>{fmt(g.net * currentYearData.goldPrice)}</td>
+                            <td style={{ ...S.td, textAlign: "right", fontSize: 12, color: "#2E7D32", fontWeight: 600 }}>{fmt(g.net * currentYearData.goldPrice * 0.025)}</td>
                           </tr>
                         ))}
                         <tr style={{ background: "#e8f5e9" }}>
                           <td style={{ ...S.td, fontWeight: 700, color: "#1B5E20" }}>TOTAL</td>
                           <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{(currentYearData.goldItems || []).reduce((s,g) => s+g.wt, 0).toFixed(1)}g</td>
                           <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{(currentYearData.goldItems || []).reduce((s,g) => s+g.net, 0).toFixed(1)}g</td>
-                          <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{fmt(curData.gold)}</td>
-                          <td style={{ ...S.td, textAlign: "right", fontWeight: 700, color: "#1B5E20" }}>{fmt(curData.gold * 0.025)}</td>
+                          <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{fmt(currentYearData.gold)}</td>
+                          <td style={{ ...S.td, textAlign: "right", fontWeight: 700, color: "#1B5E20" }}>{fmt(currentYearData.gold * 0.025)}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -641,7 +641,7 @@ export default function ZakatukumPreview() {
                   <SectionCard title={t("cash_home")} color="#1565C0">
                     <p style={{ margin: 0, fontSize: 13, color: "#999", textAlign: "center", padding: "16px 0" }}>No bank accounts added yet. Connect accounts or add manually.</p>
                     <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0 0", marginTop: 4, borderTop: "2px solid #e8f5e9", fontWeight: 700, color: "#1B5E20" }}>
-                      <span>TOTAL</span><span>{fmt(curData.cash)}</span>
+                      <span>TOTAL</span><span>{fmt(currentYearData.cash)}</span>
                     </div>
                   </SectionCard>
 
@@ -656,7 +656,7 @@ export default function ZakatukumPreview() {
                       </div>
                     ))}
                     <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0 0", marginTop: 4, borderTop: "2px solid #e8f5e9", fontWeight: 700, color: "#1B5E20" }}>
-                      <span>TOTAL</span><span>{fmt(curData.inv)}</span>
+                      <span>TOTAL</span><span>{fmt(currentYearData.inv)}</span>
                     </div>
                   </SectionCard>
                 </div>
@@ -665,7 +665,7 @@ export default function ZakatukumPreview() {
               <div style={{ background: "linear-gradient(135deg, #1B5E20, #2E7D32, #388E3C)", borderRadius: 16, padding: "24px 28px", marginTop: 16, color: "#fff" }}>
                 <h3 style={{ margin: "0 0 14px", fontSize: 15, fontWeight: 700, opacity: 0.9 }}>{t("zakat_calc_summary").toUpperCase()}</h3>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-                  {[[t("gold_jewelry"), curData.gold], [t("cash_home"), curData.cash], [t("investments"), curData.inv], [t("debts_owed"), 0], ["Less: Liabilities", 0], [t("business_inventory"), 0]].map(([l, v], i) => (
+                  {[[t("gold_jewelry"), currentYearData.gold], [t("cash_home"), currentYearData.cash], [t("investments"), currentYearData.inv], [t("debts_owed"), 0], ["Less: Liabilities", 0], [t("business_inventory"), 0]].map(([l, v], i) => (
                     <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.12)", fontSize: 13 }}>
                       <span style={{ opacity: 0.75 }}>{l}</span><span style={{ fontWeight: 700 }}>{fmt(v)}</span>
                     </div>
