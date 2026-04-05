@@ -983,9 +983,44 @@ export default function ZakatukumPreview() {
                     <input type="number" value={currentYearData.livestock.sheep} onChange={e => updateNestedField("livestock", "sheep", parseFloat(e.target.value) || 0)} style={{ ...S.input, marginTop: 6 }} />
                   </div>
                 </div>
-                <div style={{ background: "#f5f5f5", padding: "12px 14px", borderRadius: 8, fontSize: 13, color: "#555" }}>
-                  <p style={{ margin: 0, fontWeight: 600 }}>Nisab Reference:</p>
-                  <p style={{ margin: "8px 0 0", fontSize: 12 }}>Sheep (40-120=1, 121-200=2, 201-399=3, 400+=1per100) | Cattle (30-39=1yr, 40-59=2yr, 60-69=2x1yr, 70+=prop) | Camels (5-9=1sheep, 10-14=2, 15-19=3, 20-24=4, 25-35=1camel-1yr, 36-45=1camel-2yr, 46-60=1camel-3yr, 61-75=1camel-4yr, 76-90=2camel-2yr, 91-120=2camel-3yr)</p>
+                <div style={{ background: "#f5f5f5", padding: "16px 18px", borderRadius: 8, fontSize: 13, color: "#555" }}>
+                  <p style={{ margin: "0 0 12px", fontWeight: 700, fontSize: 14, color: "#1B5E20" }}>Nisab Reference Guide</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+                    <div style={{ background: "#fff", borderRadius: 8, padding: "12px 14px", border: "1px solid #e0e0e0" }}>
+                      <p style={{ margin: "0 0 8px", fontWeight: 700, fontSize: 13, color: "#8B4513" }}>Sheep / Goats</p>
+                      <table style={{ width: "100%", fontSize: 11, borderCollapse: "collapse" }}>
+                        <thead><tr><th style={{ textAlign: "left", padding: "2px 0", color: "#888", fontWeight: 600 }}>Count</th><th style={{ textAlign: "right", padding: "2px 0", color: "#888", fontWeight: 600 }}>Zakat Due</th></tr></thead>
+                        <tbody>
+                          {[["40 – 120", "1 sheep"], ["121 – 200", "2 sheep"], ["201 – 399", "3 sheep"], ["400+", "1 per 100"]].map(([r, z], i) => (
+                            <tr key={i}><td style={{ padding: "3px 0", borderTop: "1px solid #f0f0f0" }}>{r}</td><td style={{ padding: "3px 0", borderTop: "1px solid #f0f0f0", textAlign: "right", fontWeight: 600, color: "#333" }}>{z}</td></tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div style={{ background: "#fff", borderRadius: 8, padding: "12px 14px", border: "1px solid #e0e0e0" }}>
+                      <p style={{ margin: "0 0 8px", fontWeight: 700, fontSize: 13, color: "#8B4513" }}>Cattle</p>
+                      <table style={{ width: "100%", fontSize: 11, borderCollapse: "collapse" }}>
+                        <thead><tr><th style={{ textAlign: "left", padding: "2px 0", color: "#888", fontWeight: 600 }}>Count</th><th style={{ textAlign: "right", padding: "2px 0", color: "#888", fontWeight: 600 }}>Zakat Due</th></tr></thead>
+                        <tbody>
+                          {[["30 – 39", "1 calf (1 yr)"], ["40 – 59", "1 calf (2 yr)"], ["60 – 69", "2 calves (1 yr)"], ["70+", "Proportional"]].map(([r, z], i) => (
+                            <tr key={i}><td style={{ padding: "3px 0", borderTop: "1px solid #f0f0f0" }}>{r}</td><td style={{ padding: "3px 0", borderTop: "1px solid #f0f0f0", textAlign: "right", fontWeight: 600, color: "#333" }}>{z}</td></tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div style={{ background: "#fff", borderRadius: 8, padding: "12px 14px", border: "1px solid #e0e0e0" }}>
+                      <p style={{ margin: "0 0 8px", fontWeight: 700, fontSize: 13, color: "#8B4513" }}>Camels</p>
+                      <table style={{ width: "100%", fontSize: 11, borderCollapse: "collapse" }}>
+                        <thead><tr><th style={{ textAlign: "left", padding: "2px 0", color: "#888", fontWeight: 600 }}>Count</th><th style={{ textAlign: "right", padding: "2px 0", color: "#888", fontWeight: 600 }}>Zakat Due</th></tr></thead>
+                        <tbody>
+                          {[["5 – 9", "1 sheep"], ["10 – 14", "2 sheep"], ["15 – 19", "3 sheep"], ["20 – 24", "4 sheep"], ["25 – 35", "1 camel (1 yr)"], ["36 – 45", "1 camel (2 yr)"], ["46 – 60", "1 camel (3 yr)"], ["61 – 75", "1 camel (4 yr)"], ["76 – 90", "2 camels (2 yr)"], ["91 – 120", "2 camels (3 yr)"]].map(([r, z], i) => (
+                            <tr key={i}><td style={{ padding: "3px 0", borderTop: "1px solid #f0f0f0" }}>{r}</td><td style={{ padding: "3px 0", borderTop: "1px solid #f0f0f0", textAlign: "right", fontWeight: 600, color: "#333" }}>{z}</td></tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <p style={{ margin: "10px 0 0", fontSize: 11, color: "#888" }}>Below minimum nisab = no zakat due. Livestock must be free-grazing (sa'imah) for the majority of the year.</p>
                 </div>
               </SectionCard>
             </div>
