@@ -1436,38 +1436,11 @@ export default function ZakatukumPreview() {
               <span style={{ fontSize: 16 }}>{n.icon}</span> {n.label}
             </button>
           ))}
-          {/* ─── Year Switcher ─── */}
-          <div style={{ marginTop: 20, padding: "12px", background: "#f8f9fa", borderRadius: 10, borderTop: "2px solid #1B5E20" }}>
-            <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 700, color: "#1B5E20", textTransform: "uppercase", letterSpacing: 0.5 }}>Your Zakat Years</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 200, overflowY: "auto" }}>
-              {Object.keys(yearlyData).sort((a, b) => b.localeCompare(a)).map(yk => {
-                const d = yearlyData[yk] || emptyYearData;
-                const isActive = selectedYear === yk;
-                const ykWealth = d.cash + d.inv + d.gold;
-                const ykDue = d.due || 0;
-                const ykPaid = d.paid || 0;
-                return (
-                  <button key={yk} onClick={() => setSelectedYear(yk)}
-                    style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", borderRadius: 8, border: isActive ? "2px solid #1B5E20" : "1px solid #e0e0e0", background: isActive ? "#E8F5E9" : "#fff", cursor: "pointer", transition: "all 0.15s" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: 13, fontWeight: isActive ? 800 : 600, color: isActive ? "#1B5E20" : "#333" }}>{formatYearDisplay(yk)}</span>
-                      {ykDue > 0 && ykPaid >= ykDue && <span style={{ fontSize: 10, color: "#2E7D32", fontWeight: 700 }}>✓ Paid</span>}
-                      {ykDue > 0 && ykPaid < ykDue && <span style={{ fontSize: 10, color: "#E65100", fontWeight: 700 }}>{Math.round((ykPaid / ykDue) * 100)}%</span>}
-                    </div>
-                    {(ykWealth > 0 || ykDue > 0) && (
-                      <div style={{ marginTop: 4, display: "flex", gap: 8, fontSize: 10, color: "#888" }}>
-                        <span>Due: {fmt(ykDue)}</span>
-                        <span>Paid: {fmt(ykPaid)}</span>
-                      </div>
-                    )}
-                    {ykWealth === 0 && ykDue === 0 && (
-                      <p style={{ margin: "2px 0 0", fontSize: 10, color: "#bbb" }}>No data entered</p>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-            <button onClick={() => setShowAddYearModal(true)} style={{ marginTop: 8, padding: "8px 12px", borderRadius: 8, border: "2px dashed #2E7D32", background: "transparent", color: "#1B5E20", fontSize: 12, fontWeight: 700, cursor: "pointer", width: "100%", transition: "all 0.15s" }}>+ {t("add_year")}</button>
+          {/* ─── Current Year Info ─── */}
+          <div style={{ marginTop: 20, padding: "14px", background: "#e8f5e9", borderRadius: 10 }}>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "#1B5E20", textTransform: "uppercase" }}>{t("current_year")}</p>
+            <p style={{ margin: "4px 0 0", fontSize: 15, fontWeight: 800, color: "#1B5E20" }}>{formatYearDisplay(selectedYear)}</p>
+            <p style={{ margin: "2px 0 0", fontSize: 11, color: "#2E7D32" }}>{t("zakat_due")}: {fmtFull(zakatDue)}</p>
           </div>
         </nav>
 
