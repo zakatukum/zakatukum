@@ -71,11 +71,17 @@ let fmtFull = (n) => new Intl.NumberFormat("en-US", { style: "currency", currenc
 let fmtShort = (n) => { if (n >= 1000000) return `$${(n/1000000).toFixed(1)}M`; if (n >= 1000) return `$${(n/1000).toFixed(1)}K`; return fmt(n); };
 
 // ─── Data (add your own values) ───
-// Hijri year calculation helper
+// Hijri year calculation helper — returns the Hijri year at start of Gregorian year
 function getHijriYear(gregYear) {
-  const jdn = gregorianToJDN(gregYear, 6, 15); // mid-year
+  const jdn = gregorianToJDN(gregYear, 1, 1);
   const h = jdnToHijri(jdn);
   return h.year;
+}
+// Get Hijri range for a Gregorian year (start and end)
+function getHijriRange(gregYear) {
+  const startH = jdnToHijri(gregorianToJDN(gregYear, 1, 1));
+  const endH = jdnToHijri(gregorianToJDN(gregYear, 12, 31));
+  return { start: startH.year, end: endH.year };
 }
 
 // ─── Country-specific Data ───
@@ -2826,26 +2832,60 @@ export default function ZakatukumPreview() {
 
       {showAddYearModal && (
         <div style={S.overlay} onClick={() => setShowAddYearModal(false)}>
-          <div style={{ ...S.modal, width: 420 }} onClick={e => e.stopPropagation()}>
+          <div style={{ ...S.modal, width: 460 }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: "24px", textAlign: "center", borderBottom: "1px solid #f0f0f0" }}>
               <p style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 800, color: "#333" }}>{t("add_year")}</p>
-              <p style={{ margin: 0, fontSize: 12, color: "#999" }}>Add a new year to your zakat tracker</p>
+              <p style={{ margin: 0, fontSize: 12, color: "#999" }}>Add a zakat year — enter Gregorian or Hijri year</p>
             </div>
             <div style={{ padding: "24px" }}>
+              {/* Gregorian Year Input */}
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase" }}>{t("gregorian_year")}</label>
               <input
                 type="number"
                 value={newYearInput}
                 onChange={e => setNewYearInput(e.target.value)}
                 placeholder="e.g., 2025"
-                style={{ ...S.input, marginBottom: 16, fontSize: 15 }}
+                style={{ ...S.input, marginBottom: 12, fontSize: 15 }}
               />
-              {newYearInput && (
-                <div style={{ background: "#f5f5f5", padding: "12px", borderRadius: 8, marginBottom: 16 }}>
-                  <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>{t("hijri_year")}</p>
-                  <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#1B5E20" }}>{getHijriYear(parseInt(newYearInput) || 0)} AH</p>
+              {/* Show Hijri mapping */}
+              {newYearInput && parseInt(newYearInput) > 1900 && (
+                <div style={{ background: "#e8f5e9", padding: "14px 16px", borderRadius: 10, marginBottom: 16, border: "1px solid #A5D6A7" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <p style={{ margin: "0 0 2px", fontSize: 11, fontWeight: 600, color: "#2E7D32", textTransform: "uppercase" }}>Hijri Year</p>
+                      <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#1B5E20" }}>{getHijriYear(parseInt(newYearInput))} AH</p>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <p style={{ margin: "0 0 2px", fontSize: 11, fontWeight: 600, color: "#2E7D32", textTransform: "uppercase" }}>Hijri Range</p>
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#333" }}>
+                        {(() => { const r = getHijriRange(parseInt(newYearInput)); return `${r.start} — ${r.end} AH`; })()}
+                      </p>
+                    </div>
+                  </div>
+                  <p style={{ margin: "8px 0 0", fontSize: 11, color: "#555" }}>
+                    Gregorian {newYearInput} spans Hijri years {(() => { const r = getHijriRange(parseInt(newYearInput)); return `${r.start} and ${r.end}`; })()}.
+                    The primary Hijri year ({getHijriYear(parseInt(newYearInput))}) is used for zakat tracking.
+                  </p>
                 </div>
               )}
+
+              {/* Quick year buttons */}
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase" }}>Quick Select</p>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {Array.from({ length: 7 }, (_, i) => currentGreg - i).map(y => {
+                    const h = getHijriYear(y);
+                    const exists = yearlyData[`${y}-${h}`];
+                    return (
+                      <button key={y} onClick={() => !exists && setNewYearInput(y.toString())}
+                        style={{ padding: "8px 14px", borderRadius: 8, border: exists ? "1px solid #e0e0e0" : newYearInput === y.toString() ? "2px solid #1B5E20" : "1px solid #ccc", background: exists ? "#f5f5f5" : newYearInput === y.toString() ? "#E8F5E9" : "#fff", color: exists ? "#bbb" : "#333", fontSize: 12, fontWeight: 600, cursor: exists ? "default" : "pointer", opacity: exists ? 0.5 : 1 }}>
+                        {y} / {h} AH {exists ? "✓" : ""}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div style={{ display: "flex", gap: 10 }}>
                 <button onClick={() => setShowAddYearModal(false)} style={{ flex: 1, padding: "10px 20px", borderRadius: 10, border: "1px solid #e0e0e0", background: "#fff", fontSize: 14, cursor: "pointer", fontWeight: 600 }}>{t("cancel")}</button>
                 <button
@@ -2860,6 +2900,9 @@ export default function ZakatukumPreview() {
                           [yearKey]: { ...emptyYearData }
                         }));
                         setSelectedYear(yearKey);
+                        addToast(`Added year ${gregYear} / ${hijriYear} AH`);
+                      } else {
+                        addToast("This year already exists", "warning");
                       }
                       setNewYearInput("");
                       setShowAddYearModal(false);
