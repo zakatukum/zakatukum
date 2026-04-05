@@ -115,6 +115,15 @@ const COUNTRIES = [
   { code: "AU", name: "Australia", flag: "🇦🇺", region: "Pacific" },
 ];
 
+// Country → default currency mapping
+const COUNTRY_CURRENCY = {
+  GLOBAL: "USD", US: "USD", CA: "CAD", GB: "GBP", DE: "EUR", FR: "EUR", SE: "SEK", NO: "NOK", NL: "EUR",
+  SA: "SAR", AE: "AED", QA: "QAR", KW: "KWD", BH: "BHD", OM: "OMR",
+  IQ: "IQD", JO: "JOD", LB: "LBP", PS: "USD", TR: "TRY",
+  EG: "EGP", MA: "MAD", NG: "NGN", ZA: "ZAR", SD: "SDG", SO: "USD", KE: "KES",
+  PK: "PKR", IN: "INR", BD: "BDT", MY: "MYR", ID: "IDR", SG: "SGD", AU: "AUD",
+};
+
 const COUNTRY_BANKS = {
   GLOBAL: ["Any Bank (Manual Entry)"],
   US: ["Chase", "Bank of America", "Wells Fargo", "Citi", "US Bank", "Capital One", "PNC", "TD Bank"],
@@ -155,11 +164,11 @@ const COUNTRY_BANKS = {
 const COUNTRY_ORGS = {
   GLOBAL: [
     { id: 1, name: "Islamic Relief Worldwide", desc: "Global programs in 40+ countries", flag: "🌍", method: "wire", cat: "Relief" },
-    { id: 2, name: "Muslim Aid", desc: "International humanitarian organization", flag: "🌍", method: "wire", cat: "Relief" },
-    { id: 3, name: "International Islamic Charity Org", desc: "Global zakat distribution network", flag: "🌍", method: "wire", cat: "Zakat" },
-    { id: 4, name: "Palestine Red Crescent", desc: "Medical & humanitarian services", flag: "🇵🇸", method: "wire", cat: "Medical" },
-    { id: 5, name: "UNHCR (Zakat Fund)", desc: "UN Refugee Zakat Fund — Sharia compliant", flag: "🌍", method: "wire", cat: "Refugee" },
-    { id: 6, name: "Penny Appeal", desc: "Global charity, education & orphans", flag: "🌍", method: "wire", cat: "Education" },
+    { id: 2, name: "Muslim Aid International", desc: "Islamic humanitarian organization", flag: "🌍", method: "wire", cat: "Relief" },
+    { id: 3, name: "Muslim Hands", desc: "International Islamic development charity", flag: "🌍", method: "wire", cat: "Relief" },
+    { id: 4, name: "Palestine Red Crescent", desc: "Medical & humanitarian services in Palestine", flag: "🇵🇸", method: "wire", cat: "Medical" },
+    { id: 5, name: "Penny Appeal", desc: "Islamic charity — education, orphans, water", flag: "🌍", method: "wire", cat: "Education" },
+    { id: 6, name: "Human Appeal", desc: "Islamic relief, development & orphan sponsorship", flag: "🌍", method: "wire", cat: "Relief" },
   ],
   US: [
     { id: 101, name: "Islamic Relief USA", desc: "Nationwide relief, zakat-verified", flag: "🇺🇸", method: "stripe", cat: "Relief" },
@@ -854,7 +863,7 @@ export default function ZakatukumPreview() {
               {authMode === "signup" && (
                 <div style={{ marginBottom: 20 }}>
                   <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Country</label>
-                  <select value={country} onChange={e => setCountry(e.target.value)} style={{ ...S.input, padding: "12px 14px", fontSize: 14, cursor: "pointer" }}>
+                  <select value={country} onChange={e => { const c = e.target.value; setCountry(c); if (COUNTRY_CURRENCY[c]) setCurrency(COUNTRY_CURRENCY[c]); }} style={{ ...S.input, padding: "12px 14px", fontSize: 14, cursor: "pointer" }}>
                     <option value="GLOBAL">🌍 International / Global</option>
                     {Object.entries(COUNTRIES.reduce((groups, c) => { if (c.code !== "GLOBAL") { (groups[c.region] = groups[c.region] || []).push(c); } return groups; }, {})).map(([region, countries]) => (
                       <optgroup key={region} label={region}>
@@ -926,7 +935,7 @@ export default function ZakatukumPreview() {
             <option value="de">Deutsch</option>
             <option value="bn">বাংলা</option>
           </select>
-          <select value={country} onChange={e => setCountry(e.target.value)} style={{ ...S.yearSelect, maxWidth: 120 }}>
+          <select value={country} onChange={e => { const c = e.target.value; setCountry(c); if (COUNTRY_CURRENCY[c]) setCurrency(COUNTRY_CURRENCY[c]); }} style={{ ...S.yearSelect, maxWidth: 120 }}>
             <option value="GLOBAL">🌍 Global</option>
             {Object.entries(COUNTRIES.reduce((groups, c) => { if (c.code !== "GLOBAL") { (groups[c.region] = groups[c.region] || []).push(c); } return groups; }, {})).map(([region, countries]) => (
               <optgroup key={region} label={region}>
@@ -1491,7 +1500,7 @@ export default function ZakatukumPreview() {
               <p style={{ margin: "0 0 12px", fontSize: 13, color: "#999" }}>Send zakat directly to verified organizations {country === "GLOBAL" ? "worldwide" : `in ${countryInfo.name}`}</p>
               <div style={{ padding: "10px 14px", marginBottom: 16, borderRadius: 8, background: "#E3F2FD", border: "1px solid #90CAF9", fontSize: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span><span style={{ fontWeight: 700, color: "#1565C0" }}>{countryInfo.flag} {countryInfo.name}</span> — Showing {countryOrgs.length} verified organizations and {countryBanks.length} local banks</span>
-                <select value={country} onChange={e => setCountry(e.target.value)} style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #90CAF9", background: "#fff", fontSize: 11, cursor: "pointer" }}>
+                <select value={country} onChange={e => { const c = e.target.value; setCountry(c); if (COUNTRY_CURRENCY[c]) setCurrency(COUNTRY_CURRENCY[c]); }} style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #90CAF9", background: "#fff", fontSize: 11, cursor: "pointer" }}>
                   <option value="GLOBAL">🌍 Global</option>
                   {COUNTRIES.filter(c => c.code !== "GLOBAL").map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
                 </select>
