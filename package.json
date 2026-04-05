@@ -1,0 +1,24 @@
+{
+  "name": "zakatukum",
+  "version": "1.0.0",
+  "description": "Zakatukum — Your comprehensive zakat calculator for wealth and financial planning",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "next": "^15.0.0",
+    "recharts": "^2.10.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.50.0",
+    "eslint-config-next": "^15.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
