@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from "recharts";
+import { supabase } from "@/lib/supabase";
 
 // ─── Hijri Date Utilities ───
 const HIJRI_EPOCH = 1948439.5;
@@ -482,8 +483,12 @@ export default function ZakatukumPreview() {
   const [authPassword, setAuthPassword] = useState("");
   const [authName, setAuthName] = useState("");
   const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true); // true while checking session on mount
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
+  const [userId, setUserId] = useState(null);
+  const [session, setSession] = useState(null);
 
   const [view, setView] = useState("dashboard");
   const [lang, setLang] = useState("en");
@@ -549,18 +554,212 @@ export default function ZakatukumPreview() {
   const [showAddYearModal, setShowAddYearModal] = useState(false);
   const [newYearInput, setNewYearInput] = useState("");
 
-  // Auth handler (UI-only for now — backend auth in future phase)
-  const handleAuth = (e) => {
+  // ─── Check session on mount & listen for auth changes ───
+  useEffect(() => {
+    if (!supabase) { setAuthChecking(false); return; }
+    // Check existing session
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      if (s?.user) {
+        setSession(s);
+        setUserId(s.user.id);
+        setUserEmail(s.user.email);
+        setUserName(s.user.user_metadata?.name || s.user.email?.split("@")[0] || "User");
+        // Load profile preferences
+        supabase.from("profiles").select("*").eq("id", s.user.id).single().then(({ data: profile }) => {
+          if (profile) {
+            if (profile.country) setCountry(profile.country);
+            if (profile.currency) setCurrency(profile.currency);
+            if (profile.madhab) setMadhab(profile.madhab);
+            if (profile.lang) setLang(profile.lang);
+          }
+        });
+        setIsLoggedIn(true);
+      }
+      setAuthChecking(false);
+    });
+
+    // Listen for auth changes (login, logout, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      if (s?.user) {
+        setSession(s);
+        setUserId(s.user.id);
+        setUserEmail(s.user.email);
+        setUserName(s.user.user_metadata?.name || s.user.email?.split("@")[0] || "User");
+        setIsLoggedIn(true);
+      } else {
+        setSession(null);
+        setUserId(null);
+        setIsLoggedIn(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // ─── Load zakat data from Supabase when logged in ───
+  useEffect(() => {
+    if (!isLoggedIn || !session) return;
+    const loadData = async () => {
+      const { data, error } = await supabase
+        .from("zakat_years")
+        .select("*")
+        .order("hijri_year", { ascending: false });
+      if (data && data.length > 0) {
+        const loaded = {};
+        data.forEach(row => {
+          const key = `${row.greg_year}-${row.hijri_year}`;
+          loaded[key] = {
+            goldPrice: 0,
+            cash: Number(row.cash) || 0,
+            inv: 0,
+            gold: Number(row.gold_grams) || 0,
+            paid: 0,
+            due: Number(row.total_zakat) || 0,
+            goldItems: [],
+            investments: row.investments || [],
+            payments: [],
+            connectedAccounts: [],
+            manualEntries: {
+              cashHome: String(Number(row.cash) || ""),
+              goldItems: [],
+              debtsOwed: [{ person: "", amount: String(Number(row.debts_owed) || ""), expectedDate: "" }],
+              businessInventory: String(Number(row.business_inventory) || ""),
+              otherAssets: [{ description: "", value: "" }],
+            },
+            livestock: row.livestock || { camels: 0, cattle: 0, sheep: 0 },
+            agriculture: row.agriculture || { cropType: "", weight: 0, unit: "kg", irrigated: true, marketValue: 0 },
+            mining: { minerals: Number(row.mining_value) || 0, rikaz: 0 },
+            rental: row.rental || { monthlyIncome: 0, expenses: 0, months: 12 },
+            _dbId: row.id, // track database row id
+          };
+        });
+        setYearlyData(prev => ({ ...prev, ...loaded }));
+      }
+    };
+    loadData();
+  }, [isLoggedIn, session]);
+
+  // ─── Auto-save zakat data to Supabase (debounced) ───
+  const saveToSupabase = useCallback(async (yearKey, data) => {
+    if (!session || !userId) return;
+    const [greg, hijri] = yearKey.split("-").map(Number);
+    if (!greg || !hijri) return;
+    const payload = {
+      hijri_year: hijri,
+      greg_year: greg,
+      cash: Number(data.cash) || 0,
+      savings: Number(data.manualEntries?.cashHome) || 0,
+      gold_grams: Number(data.gold) || 0,
+      gold_value: Number(data.goldItems?.reduce?.((s, i) => s + (Number(i.value) || 0), 0)) || 0,
+      investments: data.investments || [],
+      business_inventory: Number(data.manualEntries?.businessInventory) || 0,
+      rental: data.rental || {},
+      agriculture: data.agriculture || {},
+      livestock: data.livestock || {},
+      mining_value: Number(data.mining?.minerals) || 0,
+      debts_owed: Number(data.manualEntries?.debtsOwed?.[0]?.amount) || 0,
+      total_zakat: Number(data.due) || 0,
+      total_assets: Number(data.cash) + Number(data.inv) + Number(data.gold) || 0,
+    };
+    await supabase.from("zakat_years").upsert(
+      { ...payload, user_id: userId },
+      { onConflict: "user_id,hijri_year" }
+    );
+  }, [session, userId]);
+
+  // Save whenever yearlyData changes (with debounce)
+  useEffect(() => {
+    if (!isLoggedIn || !session) return;
+    const timer = setTimeout(() => {
+      const data = yearlyData[selectedYear];
+      if (data) saveToSupabase(selectedYear, data);
+    }, 2000); // 2 second debounce
+    return () => clearTimeout(timer);
+  }, [yearlyData, selectedYear, isLoggedIn, session, saveToSupabase]);
+
+  // ─── Auth handler (real Supabase auth) ───
+  const handleAuth = async (e) => {
     e.preventDefault();
     setAuthError("");
-    if (!authEmail || !authPassword) { setAuthError("Please fill in all fields"); return; }
-    if (authMode === "signup" && !authName) { setAuthError("Please enter your name"); return; }
-    if (authPassword.length < 6) { setAuthError("Password must be at least 6 characters"); return; }
-    // Simulate login/signup
-    setUserName(authMode === "signup" ? authName : authEmail.split("@")[0]);
-    setUserEmail(authEmail);
-    setIsLoggedIn(true);
+    setAuthLoading(true);
+
+    if (!authEmail || !authPassword) { setAuthError("Please fill in all fields"); setAuthLoading(false); return; }
+    if (authMode === "signup" && !authName) { setAuthError("Please enter your name"); setAuthLoading(false); return; }
+    if (authPassword.length < 6) { setAuthError("Password must be at least 6 characters"); setAuthLoading(false); return; }
+
+    try {
+      if (authMode === "signup") {
+        const { data, error } = await supabase.auth.signUp({
+          email: authEmail,
+          password: authPassword,
+          options: {
+            data: { name: authName, country, currency, madhab },
+          },
+        });
+        if (error) throw error;
+        if (data.session) {
+          // Auto-confirmed (email confirmation disabled) — save profile prefs
+          await supabase.from("profiles").upsert({
+            id: data.user.id,
+            name: authName,
+            email: authEmail,
+            country,
+            currency,
+            madhab,
+            lang,
+          });
+          setUserName(authName);
+          setUserEmail(authEmail);
+        } else {
+          setAuthError("Check your email to confirm your account, then sign in.");
+          setAuthLoading(false);
+          return;
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: authEmail,
+          password: authPassword,
+        });
+        if (error) throw error;
+        setUserName(data.user.user_metadata?.name || authEmail.split("@")[0]);
+        setUserEmail(authEmail);
+      }
+    } catch (err) {
+      setAuthError(err.message || "Authentication failed");
+    }
+    setAuthLoading(false);
   };
+
+  // ─── Social login (Google / Apple via Supabase OAuth) ───
+  const handleSocialLogin = async (provider) => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: typeof window !== "undefined" ? window.location.origin : undefined },
+    });
+    if (error) setAuthError(error.message);
+  };
+
+  // ─── Logout ───
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsLoggedIn(false);
+    setSession(null);
+    setUserId(null);
+    setAuthEmail("");
+    setAuthPassword("");
+    setAuthName("");
+    setShowUserMenu(false);
+    setView("dashboard");
+  };
+
+  // ─── Save profile preferences when they change ───
+  useEffect(() => {
+    if (!userId) return;
+    const timer = setTimeout(() => {
+      supabase.from("profiles").update({ country, currency, madhab, lang }).eq("id", userId);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [country, currency, madhab, lang, userId]);
 
   // Get current madhab rules
   const madhabRules = MADHAB_RULES[madhab];
@@ -799,6 +998,19 @@ export default function ZakatukumPreview() {
     </div>
   );
 
+  // ─── LOADING STATE (checking session) ───
+  if (authChecking) {
+    return (
+      <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "linear-gradient(135deg, #0D3B0E 0%, #1B5E20 30%, #2E7D32 60%, #388E3C 100%)" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ width: 64, height: 64, borderRadius: 16, background: "rgba(255,255,255,0.15)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 32, marginBottom: 16 }}>☪</div>
+          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#fff" }}>Zakatukum <span style={{ fontFamily: "'Noto Naskh Arabic', 'Traditional Arabic', serif", fontSize: 22, fontWeight: 600, opacity: 0.85 }}>زكاتكم</span></h1>
+          <p style={{ margin: "12px 0 0", fontSize: 14, color: "rgba(255,255,255,0.6)" }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   // ─── LOGIN / SIGNUP PAGE ───
   if (!isLoggedIn) {
     return (
@@ -877,8 +1089,8 @@ export default function ZakatukumPreview() {
 
               {authError && <p style={{ margin: "0 0 16px", fontSize: 13, color: "#C62828", fontWeight: 600 }}>{authError}</p>}
 
-              <button type="submit" style={{ ...S.greenBtn, width: "100%", padding: "14px 0", fontSize: 16, borderRadius: 10 }}>
-                {authMode === "login" ? "Sign In" : "Create Account"}
+              <button type="submit" disabled={authLoading} style={{ ...S.greenBtn, width: "100%", padding: "14px 0", fontSize: 16, borderRadius: 10, opacity: authLoading ? 0.7 : 1 }}>
+                {authLoading ? "Please wait..." : authMode === "login" ? "Sign In" : "Create Account"}
               </button>
             </form>
 
@@ -897,8 +1109,8 @@ export default function ZakatukumPreview() {
 
             {/* Social Login */}
             <div style={{ display: "flex", gap: 10 }}>
-              {[["Google", "G", "#DB4437"], ["Apple", "", "#000"]].map(([name, icon, color]) => (
-                <button key={name} onClick={() => { setUserName("User"); setUserEmail("user@gmail.com"); setIsLoggedIn(true); }} style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "1px solid #e0e0e0", background: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: "#333" }}>
+              {[["google", "Google", "G"], ["apple", "Apple", ""]].map(([provider, name, icon]) => (
+                <button key={provider} onClick={() => handleSocialLogin(provider)} style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "1px solid #e0e0e0", background: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: "#333" }}>
                   <span style={{ fontSize: 16 }}>{icon}</span> {name}
                 </button>
               ))}
@@ -982,7 +1194,7 @@ export default function ZakatukumPreview() {
                   <p style={{ margin: "4px 0 0", fontSize: 11, color: "#1B5E20", fontWeight: 600 }}>{currentMadhab?.name} — {currentMadhab?.nameAr}</p>
                 </div>
                 {[["profile_settings", false], ["security_2fa", false], ["billing", false], ["connected_banks", false], ["sign_out", true]].map(([key, isLast]) => (
-                  <div key={key} onClick={() => { if (isLast) { setIsLoggedIn(false); setAuthEmail(""); setAuthPassword(""); setAuthName(""); setShowUserMenu(false); } }} style={{ padding: "10px 18px", fontSize: 13, color: isLast ? "#C62828" : "#555", cursor: "pointer", borderTop: isLast ? "1px solid #f0f0f0" : "none" }}
+                  <div key={key} onClick={() => { if (isLast) handleLogout(); }} style={{ padding: "10px 18px", fontSize: 13, color: isLast ? "#C62828" : "#555", cursor: "pointer", borderTop: isLast ? "1px solid #f0f0f0" : "none" }}
                     onMouseEnter={e => e.target.style.background = "#f5f5f5"} onMouseLeave={e => e.target.style.background = "transparent"}>
                     {t(key)}
                   </div>
