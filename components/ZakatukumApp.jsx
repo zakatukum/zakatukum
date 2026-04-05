@@ -645,8 +645,8 @@ export default function ZakatukumPreview() {
                     </div>
                   </SectionCard>
 
-                  <SectionCard title={t("investments")} color="#6A1B9A" action={<span style={{ fontSize: 11, color: "rgba(255,255,255,0.8)" }}>{INVESTMENTS_2026.length} holdings</span>}>
-                    {INVESTMENTS_2026.map((inv, i) => (
+                  <SectionCard title={t("investments")} color="#6A1B9A" action={<span style={{ fontSize: 11, color: "rgba(255,255,255,0.8)" }}>{(currentYearData.investments || []).length} holdings</span>}>
+                    {(currentYearData.investments || []).map((inv, i) => (
                       <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid #f5f5f5", fontSize: 13 }}>
                         <span style={{ color: "#555" }}>{inv.name}</span>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
