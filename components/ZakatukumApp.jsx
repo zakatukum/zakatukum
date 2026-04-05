@@ -1033,7 +1033,7 @@ export default function ZakatukumPreview() {
                 </div>
                 <div style={{ background: "#f5f5f5", padding: "12px 14px", borderRadius: 8, fontSize: 13 }}>
                   <p style={{ margin: 0, fontWeight: 600 }}>Nisab: 653 kg (5 wasq) of staple food minimum</p>
-                  <p style={{ margin: "8px 0 0", fontSize: 12, color: "#555" }}>Zakat Rate: {agriculture.irrigated ? "5%" : "10%"} | Calculated: {fmt(calculateAgriculturalZakat())}</p>
+                  <p style={{ margin: "8px 0 0", fontSize: 12, color: "#555" }}>Zakat Rate: {currentYearData.agriculture.irrigated ? "5%" : "10%"} | Calculated: {fmt(calculateAgriculturalZakat())}</p>
                 </div>
               </SectionCard>
             </div>
@@ -1088,11 +1088,11 @@ export default function ZakatukumPreview() {
                 <div style={{ background: "#f5f5f5", padding: "12px 14px", borderRadius: 8, fontSize: 13 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                     <span>Monthly Net (Income - Expenses):</span>
-                    <span style={{fontWeight: 700}}>{fmt((rental.monthlyIncome - rental.expenses))}</span>
+                    <span style={{fontWeight: 700}}>{fmt((currentYearData.rental.monthlyIncome - currentYearData.rental.expenses))}</span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                    <span>Annual Net (for {rental.months} months):</span>
-                    <span style={{fontWeight: 700}}>{fmt((rental.monthlyIncome - rental.expenses) * rental.months)}</span>
+                    <span>Annual Net (for {currentYearData.rental.months} months):</span>
+                    <span style={{fontWeight: 700}}>{fmt((currentYearData.rental.monthlyIncome - currentYearData.rental.expenses) * currentYearData.rental.months)}</span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #e0e0e0", paddingTop: 8 }}>
                     <span style={{fontWeight: 600}}>Zakat Due (2.5%):</span>
