@@ -22,7 +22,7 @@ function getHijriYear(gregYear) {
   return h.year;
 }
 
-const ORGS = [
+const ORGS = 
   { id: 1, name: "Islamic Relief USA", desc: "Nationwide relief, zakat-verified", flag: "🇺🇸", method: "stripe", cat: "Relief" },
   { id: 2, name: "ICNA Relief", desc: "Domestic poverty relief, food pantries", flag: "🇺🇸", method: "stripe", cat: "Poverty" },
   { id: 3, name: "Zakat Foundation of America", desc: "Dedicated zakat distribution", flag: "🇺🇸", method: "stripe", cat: "Zakat" },
@@ -609,7 +609,7 @@ export default function ZakatukumPreview() {
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <thead><tr>{[t("item"), t("weight"), t("net_gold"), t("value"), t("zakat")].map(h => <th key={h} style={S.th}>{h}</th>)}</tr></thead>
                       <tbody>
-                        {GOLD_ITEMS.map((g, i) => (
+                        {(currentYearData.goldItems || []).map((g, i) => (
                           <tr key={i}>
                             <td style={{ ...S.td, fontSize: 12 }}>{g.name}</td>
                             <td style={{ ...S.td, textAlign: "right", fontSize: 12 }}>{g.wt}g</td>
@@ -620,8 +620,8 @@ export default function ZakatukumPreview() {
                         ))}
                         <tr style={{ background: "#e8f5e9" }}>
                           <td style={{ ...S.td, fontWeight: 700, color: "#1B5E20" }}>TOTAL</td>
-                          <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{GOLD_ITEMS.reduce((s,g) => s+g.wt, 0).toFixed(1)}g</td>
-                          <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{GOLD_ITEMS.reduce((s,g) => s+g.net, 0).toFixed(1)}g</td>
+                          <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{(currentYearData.goldItems || []).reduce((s,g) => s+g.wt, 0).toFixed(1)}g</td>
+                          <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{(currentYearData.goldItems || []).reduce((s,g) => s+g.net, 0).toFixed(1)}g</td>
                           <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{fmt(curData.gold)}</td>
                           <td style={{ ...S.td, textAlign: "right", fontWeight: 700, color: "#1B5E20" }}>{fmt(curData.gold * 0.025)}</td>
                         </tr>
