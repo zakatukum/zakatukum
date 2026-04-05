@@ -106,9 +106,150 @@ const TRANSLATIONS = {
 };
 
 
+// ─── Madhab (School of Thought) Definitions ───
+const MADHABS = [
+  { id: "hanafi", name: "Hanafi", nameAr: "حنفي", desc: "Imam Abu Hanifa (d. 767 CE)" },
+  { id: "maliki", name: "Maliki", nameAr: "مالكي", desc: "Imam Malik ibn Anas (d. 795 CE)" },
+  { id: "shafii", name: "Shafi'i", nameAr: "شافعي", desc: "Imam Al-Shafi'i (d. 820 CE)" },
+  { id: "hanbali", name: "Hanbali", nameAr: "حنبلي", desc: "Imam Ahmad ibn Hanbal (d. 855 CE)" },
+  { id: "jafari", name: "Ja'fari (Shia Twelver)", nameAr: "جعفري", desc: "Imam Ja'far al-Sadiq (d. 765 CE)" },
+  { id: "zaydi", name: "Zaydi (Shia)", nameAr: "زيدي", desc: "Imam Zayd ibn Ali (d. 740 CE)" },
+  { id: "salafi", name: "Salafi / Ahl al-Hadith", nameAr: "سلفي / أهل الحديث", desc: "Follows direct textual evidence" },
+];
+
+// Madhab-specific zakat rules
+const MADHAB_RULES = {
+  hanafi: {
+    jewelryZakatable: true,      // All gold/silver jewelry is zakatable, even if worn
+    goldNisabGrams: 87.48,       // 20 mithqal = 87.48g
+    silverNisabGrams: 612.36,    // 200 dirhams = 612.36g
+    agriculturalNisab: 0,        // Abu Hanifa: no minimum nisab for crops
+    allCropsZakatable: true,     // Zakat on ALL produce from land
+    businessInventoryRate: 0.025,
+    tradeGoodsZakatable: true,
+    rentalIncomeZakatable: true, // On net savings from rental
+    cryptoZakatable: true,
+    notes: [
+      "Gold/silver jewelry is zakatable even if worn regularly",
+      "Agricultural zakat applies to all crops — no minimum nisab (Abu Hanifa's view)",
+      "Deduct debts from total assets before calculating zakat",
+    ],
+  },
+  maliki: {
+    jewelryZakatable: false,     // No zakat on personal-use jewelry (within reason)
+    goldNisabGrams: 85,
+    silverNisabGrams: 595,
+    agriculturalNisab: 653,      // 5 wasq (653 kg) — staple foods only
+    allCropsZakatable: false,    // Only on staple foods (grains, dates, etc.)
+    businessInventoryRate: 0.025,
+    tradeGoodsZakatable: true,
+    rentalIncomeZakatable: true,
+    cryptoZakatable: true,
+    notes: [
+      "Personal-use jewelry is exempt from zakat (within customary amounts)",
+      "Agricultural zakat only on staple foods — nisab is 653 kg (5 wasq)",
+      "Debts owed to others can be deducted from zakatable wealth",
+    ],
+  },
+  shafii: {
+    jewelryZakatable: false,
+    goldNisabGrams: 85,
+    silverNisabGrams: 595,
+    agriculturalNisab: 653,
+    allCropsZakatable: false,    // Only storable staple crops
+    businessInventoryRate: 0.025,
+    tradeGoodsZakatable: true,
+    rentalIncomeZakatable: true,
+    cryptoZakatable: true,
+    notes: [
+      "Personal-use jewelry is exempt from zakat",
+      "Agricultural zakat on storable staple crops only — nisab is 653 kg",
+      "Only immediate debts due within the year are deductible",
+    ],
+  },
+  hanbali: {
+    jewelryZakatable: false,
+    goldNisabGrams: 85,
+    silverNisabGrams: 595,
+    agriculturalNisab: 653,
+    allCropsZakatable: false,    // Storable staple foods
+    businessInventoryRate: 0.025,
+    tradeGoodsZakatable: true,
+    rentalIncomeZakatable: true,
+    cryptoZakatable: true,
+    notes: [
+      "Personal-use jewelry is exempt from zakat (majority view in the school)",
+      "Agricultural zakat on crops that can be stored and are staple foods",
+      "All debts can reduce zakatable wealth",
+    ],
+  },
+  jafari: {
+    jewelryZakatable: false,     // No zakat on jewelry in personal use
+    goldNisabGrams: 85,
+    silverNisabGrams: 595,
+    agriculturalNisab: 653,
+    allCropsZakatable: false,    // Only wheat, barley, dates, raisins
+    businessInventoryRate: 0,    // No zakat on trade goods — khums applies instead
+    tradeGoodsZakatable: false,
+    rentalIncomeZakatable: false,// Khums applies, not zakat
+    cryptoZakatable: false,      // Falls under khums
+    hasKhums: true,
+    khumsRate: 0.2,              // 20% on annual surplus
+    notes: [
+      "Zakat applies only to: gold, silver, wheat, barley, dates, raisins, camels, cattle, sheep",
+      "No zakat on business inventory or trade goods — khums (20%) applies to annual surplus",
+      "Khums is due on all surplus income after annual expenses",
+      "Personal-use jewelry is exempt from zakat",
+    ],
+  },
+  zaydi: {
+    jewelryZakatable: true,      // Similar to Hanafi on jewelry
+    goldNisabGrams: 85,
+    silverNisabGrams: 595,
+    agriculturalNisab: 653,
+    allCropsZakatable: true,     // All agricultural produce
+    businessInventoryRate: 0.025,
+    tradeGoodsZakatable: true,
+    rentalIncomeZakatable: true,
+    cryptoZakatable: true,
+    notes: [
+      "Gold/silver jewelry is zakatable (similar to Hanafi position)",
+      "Agricultural zakat applies to all crops with a nisab of 653 kg",
+      "Trade goods and business inventory are zakatable at 2.5%",
+    ],
+  },
+  salafi: {
+    jewelryZakatable: true,      // Follow hadith evidence — zakat on all gold/silver
+    goldNisabGrams: 85,
+    silverNisabGrams: 595,
+    agriculturalNisab: 653,
+    allCropsZakatable: true,     // Broad interpretation — all produce from the earth
+    businessInventoryRate: 0.025,
+    tradeGoodsZakatable: true,
+    rentalIncomeZakatable: true,
+    cryptoZakatable: true,
+    notes: [
+      "Zakat is due on ALL gold and silver, including jewelry (based on hadith evidence)",
+      "Agricultural zakat on all produce of the earth — nisab of 653 kg for grains",
+      "Follows direct textual evidence from Quran and Sahih hadith",
+    ],
+  },
+};
+
 export default function ZakatukumPreview() {
+  // Auth state
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authMode, setAuthMode] = useState("login"); // "login" or "signup"
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authName, setAuthName] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+
   const [view, setView] = useState("dashboard");
   const [lang, setLang] = useState("en");
+  const [madhab, setMadhab] = useState("hanafi");
 
   // Initialize with current year
   const currentGreg = new Date().getFullYear();
@@ -161,6 +302,23 @@ export default function ZakatukumPreview() {
   const [retirementOptions, setRetirementOptions] = useState({});
   const [showAddYearModal, setShowAddYearModal] = useState(false);
   const [newYearInput, setNewYearInput] = useState("");
+
+  // Auth handler (UI-only for now — backend auth in future phase)
+  const handleAuth = (e) => {
+    e.preventDefault();
+    setAuthError("");
+    if (!authEmail || !authPassword) { setAuthError("Please fill in all fields"); return; }
+    if (authMode === "signup" && !authName) { setAuthError("Please enter your name"); return; }
+    if (authPassword.length < 6) { setAuthError("Password must be at least 6 characters"); return; }
+    // Simulate login/signup
+    setUserName(authMode === "signup" ? authName : authEmail.split("@")[0]);
+    setUserEmail(authEmail);
+    setIsLoggedIn(true);
+  };
+
+  // Get current madhab rules
+  const madhabRules = MADHAB_RULES[madhab];
+  const currentMadhab = MADHABS.find(m => m.id === madhab);
 
   // Translation helper
   const t = (key) => TRANSLATIONS[key]?.[lang] || TRANSLATIONS[key]?.en || key;
@@ -269,7 +427,8 @@ export default function ZakatukumPreview() {
 
   const calculateAgriculturalZakat = () => {
     const { weight, marketValue, irrigated } = currentYearData.agriculture;
-    if (weight < 653) return 0; // Below nisab
+    const nisab = madhabRules.agriculturalNisab;
+    if (nisab > 0 && weight < nisab) return 0; // Below nisab (Hanafi has 0 = no minimum)
     const rate = irrigated ? 0.05 : 0.1;
     return parseFloat(marketValue || 0) * rate;
   };
@@ -321,6 +480,9 @@ export default function ZakatukumPreview() {
   const totalLiabilities = calculateLiabilities();
   const netZakatable = totalAssetsComputed - totalLiabilities;
   const zakatComputedDue = netZakatable * 0.025;
+  // Khums calculation for Ja'fari/Shia
+  const khumsApplicable = madhabRules.hasKhums || false;
+  const khumsDue = khumsApplicable ? Math.max(0, netZakatable) * (madhabRules.khumsRate || 0.2) : 0;
 
   const wealthBreakdown = [
     { name: "Banking", value: calculateCategoryBalance("banking") },
@@ -388,6 +550,103 @@ export default function ZakatukumPreview() {
     </div>
   );
 
+  // ─── LOGIN / SIGNUP PAGE ───
+  if (!isLoggedIn) {
+    return (
+      <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "linear-gradient(135deg, #0D3B0E 0%, #1B5E20 30%, #2E7D32 60%, #388E3C 100%)" }}>
+        <div style={{ width: "100%", maxWidth: 440, margin: "0 20px" }}>
+          {/* Logo */}
+          <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <div style={{ width: 64, height: 64, borderRadius: 16, background: "rgba(255,255,255,0.15)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 32, marginBottom: 16 }}>☪</div>
+            <h1 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: "#fff", letterSpacing: -0.5 }}>Zakatukum <span style={{ fontFamily: "'Noto Naskh Arabic', 'Traditional Arabic', serif", fontSize: 24, fontWeight: 600, opacity: 0.85 }}>زكاتكم</span></h1>
+            <p style={{ margin: "8px 0 0", fontSize: 14, color: "rgba(255,255,255,0.6)" }}>Precise Zakat Calculation</p>
+          </div>
+
+          {/* Auth Card */}
+          <div style={{ background: "#fff", borderRadius: 16, padding: "32px 28px", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            {/* Tabs */}
+            <div style={{ display: "flex", marginBottom: 24, borderRadius: 10, background: "#f5f5f5", padding: 3 }}>
+              {["login", "signup"].map(mode => (
+                <button key={mode} onClick={() => { setAuthMode(mode); setAuthError(""); }} style={{ flex: 1, padding: "10px 0", borderRadius: 8, border: "none", fontSize: 14, fontWeight: 600, cursor: "pointer", background: authMode === mode ? "#fff" : "transparent", color: authMode === mode ? "#1B5E20" : "#999", boxShadow: authMode === mode ? "0 1px 4px rgba(0,0,0,0.1)" : "none", transition: "all 0.2s" }}>
+                  {mode === "login" ? "Sign In" : "Create Account"}
+                </button>
+              ))}
+            </div>
+
+            <form onSubmit={handleAuth}>
+              {authMode === "signup" && (
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Full Name</label>
+                  <input value={authName} onChange={e => setAuthName(e.target.value)} placeholder="Your full name" style={{ ...S.input, padding: "12px 14px", fontSize: 15 }} />
+                </div>
+              )}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Email</label>
+                <input type="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="you@example.com" style={{ ...S.input, padding: "12px 14px", fontSize: 15 }} />
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Password</label>
+                <input type="password" value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="••••••••" style={{ ...S.input, padding: "12px 14px", fontSize: 15 }} />
+              </div>
+
+              {authMode === "signup" && (
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>School of Thought (Madhab)</label>
+                  <select value={madhab} onChange={e => setMadhab(e.target.value)} style={{ ...S.input, padding: "12px 14px", fontSize: 14, cursor: "pointer" }}>
+                    <optgroup label="Sunni Schools">
+                      <option value="hanafi">Hanafi — حنفي</option>
+                      <option value="maliki">Maliki — مالكي</option>
+                      <option value="shafii">Shafi'i — شافعي</option>
+                      <option value="hanbali">Hanbali — حنبلي</option>
+                    </optgroup>
+                    <optgroup label="Shia Schools">
+                      <option value="jafari">Ja'fari (Twelver) — جعفري</option>
+                      <option value="zaydi">Zaydi — زيدي</option>
+                    </optgroup>
+                    <optgroup label="Other">
+                      <option value="salafi">Salafi / Ahl al-Hadith — أهل الحديث</option>
+                    </optgroup>
+                  </select>
+                  <p style={{ margin: "6px 0 0", fontSize: 11, color: "#888" }}>{MADHABS.find(m => m.id === madhab)?.desc} — Zakat calculations will follow this school's rulings</p>
+                </div>
+              )}
+
+              {authError && <p style={{ margin: "0 0 16px", fontSize: 13, color: "#C62828", fontWeight: 600 }}>{authError}</p>}
+
+              <button type="submit" style={{ ...S.greenBtn, width: "100%", padding: "14px 0", fontSize: 16, borderRadius: 10 }}>
+                {authMode === "login" ? "Sign In" : "Create Account"}
+              </button>
+            </form>
+
+            {authMode === "login" && (
+              <p style={{ margin: "16px 0 0", textAlign: "center", fontSize: 13, color: "#888" }}>
+                <span style={{ cursor: "pointer", color: "#1B5E20", fontWeight: 600 }}>Forgot password?</span>
+              </p>
+            )}
+
+            {/* Divider */}
+            <div style={{ display: "flex", alignItems: "center", margin: "24px 0", gap: 12 }}>
+              <div style={{ flex: 1, height: 1, background: "#e0e0e0" }} />
+              <span style={{ fontSize: 12, color: "#bbb" }}>or continue with</span>
+              <div style={{ flex: 1, height: 1, background: "#e0e0e0" }} />
+            </div>
+
+            {/* Social Login */}
+            <div style={{ display: "flex", gap: 10 }}>
+              {[["Google", "G", "#DB4437"], ["Apple", "", "#000"]].map(([name, icon, color]) => (
+                <button key={name} onClick={() => { setUserName("User"); setUserEmail("user@gmail.com"); setIsLoggedIn(true); }} style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "1px solid #e0e0e0", background: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: "#333" }}>
+                  <span style={{ fontSize: 16 }}>{icon}</span> {name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <p style={{ textAlign: "center", marginTop: 20, fontSize: 12, color: "rgba(255,255,255,0.4)" }}>By signing up, you agree to our Terms of Service and Privacy Policy</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{...S.page, direction: lang === "ar" || lang === "ur" ? "rtl" : "ltr"}}>
       <header style={S.header}>
@@ -412,6 +671,21 @@ export default function ZakatukumPreview() {
             <option value="de">Deutsch</option>
             <option value="bn">বাংলা</option>
           </select>
+          <select value={madhab} onChange={e => setMadhab(e.target.value)} style={{ ...S.yearSelect, maxWidth: 150 }}>
+            <optgroup label="Sunni">
+              <option value="hanafi">Hanafi</option>
+              <option value="maliki">Maliki</option>
+              <option value="shafii">Shafi'i</option>
+              <option value="hanbali">Hanbali</option>
+            </optgroup>
+            <optgroup label="Shia">
+              <option value="jafari">Ja'fari</option>
+              <option value="zaydi">Zaydi</option>
+            </optgroup>
+            <optgroup label="Other">
+              <option value="salafi">Salafi</option>
+            </optgroup>
+          </select>
           <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} style={S.yearSelect}>
             {Object.keys(yearlyData).sort((a, b) => parseInt(b.split("-")[0]) - parseInt(a.split("-")[0])).map(yearKey => (
               <option key={yearKey} value={yearKey} style={{ color: "#000" }}>{formatYearDisplay(yearKey)}</option>
@@ -420,15 +694,16 @@ export default function ZakatukumPreview() {
           <button onClick={() => setShowAddYearModal(true)} style={S.headerBtn}>+ {t("add_year")}</button>
           <button style={S.headerBtn}>🖨 {t("report")}</button>
           <div style={S.avatar} onClick={() => setShowUserMenu(!showUserMenu)}>
-            ?
+            {userName ? userName.charAt(0).toUpperCase() : "?"}
             {showUserMenu && (
-              <div style={{ position: "absolute", top: 40, right: 0, background: "#fff", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.15)", width: 220, zIndex: 100, overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: 40, right: 0, background: "#fff", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.15)", width: 240, zIndex: 100, overflow: "hidden" }}>
                 <div style={{ padding: "16px 18px", borderBottom: "1px solid #f0f0f0" }}>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#333" }}>{t("your_name")}</p>
-                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "#999" }}>email@example.com</p>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#333" }}>{userName || t("your_name")}</p>
+                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "#999" }}>{userEmail || "email@example.com"}</p>
+                  <p style={{ margin: "4px 0 0", fontSize: 11, color: "#1B5E20", fontWeight: 600 }}>{currentMadhab?.name} — {currentMadhab?.nameAr}</p>
                 </div>
                 {[["profile_settings", false], ["security_2fa", false], ["billing", false], ["connected_banks", false], ["sign_out", true]].map(([key, isLast]) => (
-                  <div key={key} style={{ padding: "10px 18px", fontSize: 13, color: isLast ? "#C62828" : "#555", cursor: "pointer", borderTop: isLast ? "1px solid #f0f0f0" : "none" }}
+                  <div key={key} onClick={() => { if (isLast) { setIsLoggedIn(false); setAuthEmail(""); setAuthPassword(""); setAuthName(""); setShowUserMenu(false); } }} style={{ padding: "10px 18px", fontSize: 13, color: isLast ? "#C62828" : "#555", cursor: "pointer", borderTop: isLast ? "1px solid #f0f0f0" : "none" }}
                     onMouseEnter={e => e.target.style.background = "#f5f5f5"} onMouseLeave={e => e.target.style.background = "transparent"}>
                     {t(key)}
                   </div>
@@ -477,6 +752,23 @@ export default function ZakatukumPreview() {
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button onClick={() => setView("pay")} style={S.greenBtn}>{t("pay_zakat_btn")}</button>
+                </div>
+              </div>
+
+              {/* Madhab Info Banner */}
+              <div style={{ ...S.card, padding: "14px 18px", marginBottom: 16, background: "linear-gradient(135deg, #FFF8E1, #FFF3C4)", borderLeft: "4px solid #F9A825" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div>
+                    <p style={{ margin: "0 0 6px", fontSize: 14, fontWeight: 700, color: "#E65100" }}>📖 {currentMadhab?.name} School ({currentMadhab?.nameAr})</p>
+                    <p style={{ margin: "0 0 4px", fontSize: 12, color: "#795548" }}>{currentMadhab?.desc}</p>
+                    {madhabRules.notes.slice(0, 2).map((note, i) => (
+                      <p key={i} style={{ margin: "3px 0 0", fontSize: 11, color: "#888" }}>• {note}</p>
+                    ))}
+                    {khumsApplicable && <p style={{ margin: "6px 0 0", fontSize: 12, fontWeight: 700, color: "#C62828" }}>Khums (20%) on annual surplus also applies — {fmt(khumsDue)}</p>}
+                  </div>
+                  <select value={madhab} onChange={e => setMadhab(e.target.value)} style={{ padding: "5px 8px", borderRadius: 6, border: "1px solid #e0c97f", background: "#fff", fontSize: 12, cursor: "pointer", color: "#333", flexShrink: 0 }}>
+                    {MADHABS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                  </select>
                 </div>
               </div>
 
@@ -575,7 +867,16 @@ export default function ZakatukumPreview() {
           {view === "calculator" && (
             <div style={{direction: lang === "ar" || lang === "ur" ? "rtl" : "ltr"}}>
               <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#1B5E20" }}>{t("calculator")}</h2>
-              <p style={{ margin: "0 0 20px", fontSize: 13, color: "#999" }}>{formatYearDisplay(selectedYear)} — Enter your assets to calculate zakat</p>
+              <p style={{ margin: "0 0 12px", fontSize: 13, color: "#999" }}>{formatYearDisplay(selectedYear)} — Enter your assets to calculate zakat</p>
+              <div style={{ padding: "10px 14px", marginBottom: 16, borderRadius: 8, background: "#FFF8E1", border: "1px solid #FFE082", fontSize: 12 }}>
+                <span style={{ fontWeight: 700, color: "#E65100" }}>📖 {currentMadhab?.name}:</span>{" "}
+                <span style={{ color: "#795548" }}>
+                  {madhabRules.jewelryZakatable ? "Personal-use jewelry IS zakatable" : "Personal-use jewelry is EXEMPT"} •{" "}
+                  {madhabRules.allCropsZakatable ? "All crops are zakatable" : "Only staple crops are zakatable"} •{" "}
+                  Nisab: {madhabRules.goldNisabGrams}g gold
+                  {khumsApplicable && " • Khums (20%) applies on surplus"}
+                </span>
+              </div>
 
               {CONNECTED_ACCOUNTS.length > 0 && (
                 <div style={{ ...S.card, padding: "12px 16px", marginBottom: 16, background: "linear-gradient(135deg, #E8F5E9, #F1F8E9)", borderLeft: "4px solid #2E7D32" }}>
@@ -1067,8 +1368,9 @@ export default function ZakatukumPreview() {
                   </div>
                 </div>
                 <div style={{ background: "#f5f5f5", padding: "12px 14px", borderRadius: 8, fontSize: 13 }}>
-                  <p style={{ margin: 0, fontWeight: 600 }}>Nisab: 653 kg (5 wasq) of staple food minimum</p>
-                  <p style={{ margin: "8px 0 0", fontSize: 12, color: "#555" }}>Zakat Rate: {currentYearData.agriculture.irrigated ? "5%" : "10%"} | Calculated: {fmt(calculateAgriculturalZakat())}</p>
+                  <p style={{ margin: 0, fontWeight: 600 }}>Nisab ({currentMadhab?.name}): {madhabRules.agriculturalNisab > 0 ? `${madhabRules.agriculturalNisab} kg (5 wasq) minimum` : "No minimum nisab (all produce is zakatable)"}</p>
+                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "#555" }}>Applies to: {madhabRules.allCropsZakatable ? "All crops and produce" : "Staple foods only (grains, dates, etc.)"}</p>
+                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "#555" }}>Zakat Rate: {currentYearData.agriculture.irrigated ? "5% (irrigated)" : "10% (rain-fed)"} | Calculated: {fmt(calculateAgriculturalZakat())}</p>
                 </div>
               </SectionCard>
             </div>
