@@ -1441,6 +1441,7 @@ export default function ZakatukumPreview() {
             <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "#1B5E20", textTransform: "uppercase" }}>{t("current_year")}</p>
             <p style={{ margin: "4px 0 0", fontSize: 15, fontWeight: 800, color: "#1B5E20" }}>{formatYearDisplay(selectedYear)}</p>
             <p style={{ margin: "2px 0 0", fontSize: 11, color: "#2E7D32" }}>{t("zakat_due")}: {fmtFull(zakatDue)}</p>
+            <button onClick={() => setShowAddYearModal(true)} style={{ marginTop: 8, padding: "6px 12px", borderRadius: 6, border: "1px solid #2E7D32", background: "#fff", color: "#1B5E20", fontSize: 11, fontWeight: 600, cursor: "pointer", width: "100%" }}>+ {t("add_year")}</button>
           </div>
         </nav>
 
