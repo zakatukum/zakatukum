@@ -341,7 +341,20 @@ const TRANSLATIONS = {
   "gregorian_year": { en: "Gregorian Year", ar: "السنة الميلادية", ur: "میلادی سال", tr: "Miladi Yıl", ms: "Tahun Gregorian", id: "Tahun Gregorian", fr: "Année grégorienne", es: "Año gregoriano", de: "Gregorianisches Jahr", bn: "গ্রেগরিয়ান বছর" },
   "hijri_year": { en: "Hijri Year", ar: "السنة الهجرية", ur: "ہجری سال", tr: "Hicri Yıl", ms: "Tahun Hijrah", id: "Tahun Hijri", fr: "Année hijri", es: "Año hijri", de: "Hijri-Jahr", bn: "হিজরি বছর" },
   "no_data_yet": { en: "No data for this year yet", ar: "لا توجد بيانات لهذه السنة حتى الآن", ur: "اب تک اس سال کے لیے کوئی ڈیٹا نہیں", tr: "Bu yıl için henüz veri yok", ms: "Belum ada data untuk tahun ini", id: "Belum ada data untuk tahun ini", fr: "Pas encore de données pour cette année", es: "Sin datos para este año todavía", de: "Noch keine Daten für dieses Jahr", bn: "এই বছরের জন্য এখনও কোন ডেটা নেই" },
-  "cancel": { en: "Cancel", ar: "إلغاء", ur: "منسوخ کریں", tr: "İptal", ms: "Batal", id: "Batal", fr: "Annuler", es: "Cancelar", de: "Abbrechen", bn: "বাতিল করুন" },
+  "cancel": { en: "Cancel", ar: "إلغاء", ur: "منسوخ کریں", tr: "İptal", ms: "Batal", id: "Batal", fr: "Annuler", es: "Cancelar", de: "Abbrechen", bn: "বাতিل করুন" },
+  "settings_saved": { en: "Settings saved successfully!", ar: "تم حفظ الإعدادات بنجاح!", ur: "ترتیبات کامیابی سے محفوظ ہوگئیں!", tr: "Ayarlar başarıyla kaydedildi!", ms: "Tetapan berjaya disimpan!", id: "Pengaturan berhasil disimpan!", fr: "Paramètres enregistrés avec succès!", es: "¡Configuración guardada con éxito!", de: "Einstellungen erfolgreich gespeichert!", bn: "সেটিংস সফলভাবে সংরক্ষিত!" },
+  "personal_info": { en: "Personal Information", ar: "المعلومات الشخصية", ur: "ذاتی معلومات", tr: "Kişisel Bilgiler", ms: "Maklumat Peribadi", id: "Informasi Pribadi", fr: "Informations Personnelles", es: "Información Personal", de: "Persönliche Daten", bn: "ব্যক্তিগত তথ্য" },
+  "preferences": { en: "Preferences", ar: "التفضيلات", ur: "ترجیحات", tr: "Tercihler", ms: "Keutamaan", id: "Preferensi", fr: "Préférences", es: "Preferencias", de: "Einstellungen", bn: "পছন্দসমূহ" },
+  "save_settings": { en: "Save Settings", ar: "حفظ الإعدادات", ur: "ترتیبات محفوظ کریں", tr: "Ayarları Kaydet", ms: "Simpan Tetapan", id: "Simpan Pengaturan", fr: "Enregistrer les paramètres", es: "Guardar configuración", de: "Einstellungen speichern", bn: "সেটিংস সংরক্ষণ করুন" },
+  "change_password": { en: "Change Password", ar: "تغيير كلمة المرور", ur: "پاسورڈ تبدیل کریں", tr: "Şifre Değiştir", ms: "Tukar Kata Laluan", id: "Ubah Kata Sandi", fr: "Changer le mot de passe", es: "Cambiar contraseña", de: "Passwort ändern", bn: "পাসওয়ার্ড পরিবর্তন করুন" },
+  "account_management": { en: "Account", ar: "الحساب", ur: "اکاؤنٹ", tr: "Hesap", ms: "Akaun", id: "Akun", fr: "Compte", es: "Cuenta", de: "Konto", bn: "অ্যাকাউন্ট" },
+  "zakat_reminders": { en: "Zakat Reminders", ar: "تذكيرات الزكاة", ur: "زکوۃ یاد دہانیاں", tr: "Zakat Hatırlatıcılar", ms: "Peringatan Zakat", id: "Pengingat Zakat", fr: "Rappels de Zakat", es: "Recordatorios de Zakat", de: "Zakat-Erinnerungen", bn: "জাকাত অনুস্মারক" },
+  "download_pdf": { en: "Download PDF", ar: "تحميل PDF", ur: "PDF ڈاؤنلوڈ کریں", tr: "PDF İndir", ms: "Muat Turun PDF", id: "Unduh PDF", fr: "Télécharger PDF", es: "Descargar PDF", de: "PDF herunterladen", bn: "PDF ডাউনলোড করুন" },
+  "print_report": { en: "Print Report", ar: "طباعة التقرير", ur: "رپورٹ پرنٹ کریں", tr: "Rapor Yazdır", ms: "Cetak Laporan", id: "Cetak Laporan", fr: "Imprimer le rapport", es: "Imprimir informe", de: "Bericht drucken", bn: "প্রতিবেদন মুদ্রণ করুন" },
+  "wealth_breakdown": { en: "Wealth Breakdown", ar: "تفصيل الثروة", ur: "دولت کی تفصیل", tr: "Servet Dökümü", ms: "Pecahan Kekayaan", id: "Rincian Kekayaan", fr: "Répartition de la richesse", es: "Desglose de riqueza", de: "Vermögensaufschlüsselung", bn: "সম্পদের বিশ্লেষণ" },
+  "payment_history": { en: "Payment History", ar: "سجل الدفعات", ur: "ادائیگی کی تاریخ", tr: "Ödeme Geçmişi", ms: "Sejarah Pembayaran", id: "Riwayat Pembayaran", fr: "Historique des paiements", es: "Historial de pagos", de: "Zahlungshistorie", bn: "পেমেন্টের ইতিহাস" },
+  "fee_warning": { en: "Important: Payment Processing Fees", ar: "مهم: رسوم معالجة الدفع", ur: "اہم: ادائیگی پروسیسنگ فیس", tr: "Önemli: Ödeme İşlem Ücretleri", ms: "Penting: Yuran Pemprosesan Pembayaran", id: "Penting: Biaya Pemrosesan Pembayaran", fr: "Important: Frais de traitement des paiements", es: "Importante: Tarifas de procesamiento de pagos", de: "Wichtig: Zahlungsbearbeitungsgebühren", bn: "গুরুত্বপূর্ণ: পেমেন্ট প্রসেসিং ফি" },
+  "admin_dashboard": { en: "Admin Dashboard", ar: "لوحة الإدارة", ur: "ایڈمن ڈیش بورڈ", tr: "Yönetici Paneli", ms: "Panel Pentadbir", id: "Dasbor Admin", fr: "Tableau de bord admin", es: "Panel de administración", de: "Admin-Dashboard", bn: "অ্যাডমিন ড্যাশবোর্ড" },
 };
 
 
@@ -559,6 +572,32 @@ export default function ZakatukumPreview() {
   const [retirementOptions, setRetirementOptions] = useState({});
   const [showAddYearModal, setShowAddYearModal] = useState(false);
   const [newYearInput, setNewYearInput] = useState("");
+
+  // ─── Toast & Mobile UI State ───
+  const [toasts, setToasts] = useState([]);
+  const addToast = (message, type = "success") => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+  };
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // ─── Mobile sidebar responsiveness ───
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== "undefined") {
+        if (window.innerWidth < 768) {
+          setSidebarOpen(false);
+        } else {
+          setSidebarOpen(true);
+        }
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // ─── Check session on mount & listen for auth changes ───
   useEffect(() => {
@@ -1089,10 +1128,21 @@ export default function ZakatukumPreview() {
   if (authChecking) {
     return (
       <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "linear-gradient(135deg, #0D3B0E 0%, #1B5E20 30%, #2E7D32 60%, #388E3C 100%)" }}>
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          .spinner {
+            animation: spin 1.5s linear infinite;
+          }
+        `}</style>
         <div style={{ textAlign: "center" }}>
-          <div style={{ width: 64, height: 64, borderRadius: 16, background: "rgba(255,255,255,0.15)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 32, marginBottom: 16 }}>☪</div>
+          <div style={{ width: 64, height: 64, borderRadius: 16, background: "rgba(255,255,255,0.15)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 32, marginBottom: 16, className: "spinner" }}>
+            <div className="spinner" style={{ width: 48, height: 48, borderRadius: 50, border: "3px solid rgba(255,255,255,0.3)", borderTop: "3px solid #fff" }}></div>
+          </div>
           <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#fff" }}>Zakatukum <span style={{ fontFamily: "'Noto Naskh Arabic', 'Traditional Arabic', serif", fontSize: 22, fontWeight: 600, opacity: 0.85 }}>زكاتكم</span></h1>
-          <p style={{ margin: "12px 0 0", fontSize: 14, color: "rgba(255,255,255,0.6)" }}>Loading...</p>
+          <p style={{ margin: "12px 0 0", fontSize: 14, color: "rgba(255,255,255,0.6)" }}>Initializing...</p>
         </div>
       </div>
     );
@@ -1266,6 +1316,9 @@ export default function ZakatukumPreview() {
   return (
     <div style={{...S.page, direction: lang === "ar" || lang === "ur" ? "rtl" : "ltr"}}>
       <header style={S.header}>
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", "@media (max-width: 768px)": { display: "block" }, background: "none", border: "none", color: "#fff", fontSize: 24, cursor: "pointer", padding: "8px 12px", marginRight: 12 }}>
+          {sidebarOpen ? "✕" : "☰"}
+        </button>
         <div style={S.logo}>
           <div style={S.logoIcon}>☪</div>
           <div>
@@ -1346,7 +1399,7 @@ export default function ZakatukumPreview() {
       </header>
 
       <div style={{ display: "flex" }}>
-        <nav style={{...S.nav, direction: lang === "ar" || lang === "ur" ? "rtl" : "ltr"}}>
+        <nav style={{...S.nav, direction: lang === "ar" || lang === "ur" ? "rtl" : "ltr", display: sidebarOpen ? "flex" : "none", "@media (min-width: 769px)": { display: "flex" }, position: "relative", "@media (max-width: 768px)": { position: "absolute", left: 0, top: 70, height: "calc(100vh - 70px)", zIndex: 99 }}}>
           <div style={{ padding: "8px 14px 16px", borderBottom: "1px solid #f0f0f0", marginBottom: 12 }}>
             <p style={{ margin: 0, fontSize: 11, color: "#bbb", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>{t("navigation")}</p>
           </div>
@@ -1360,7 +1413,9 @@ export default function ZakatukumPreview() {
             { id: "agriculture", icon: "🌾", label: t("agriculture") },
             { id: "mining", icon: "⛏️", label: t("mining") },
             { id: "rental", icon: "🏠", label: t("rental") },
-          ].map(n => (
+            { id: "report", icon: "📄", label: t("report") },
+            { id: "settings", icon: "⚙️", label: t("profile_settings") },
+          ].concat(userEmail === "usman.rr@gmail.com" ? [{ id: "admin", icon: "📈", label: t("admin_dashboard") }] : []).map(n => (
             <button key={n.id} onClick={() => { setView(n.id); setShowUserMenu(false); }} style={S.navBtn(view === n.id)}>
               <span style={{ fontSize: 16 }}>{n.icon}</span> {n.label}
             </button>
@@ -2103,6 +2158,235 @@ export default function ZakatukumPreview() {
               </SectionCard>
             </div>
           )}
+
+          {view === "report" && (
+            <div style={{direction: lang === "ar" || lang === "ur" ? "rtl" : "ltr"}}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <div>
+                  <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#1B5E20" }}>{t("report")} — {formatYearDisplay(selectedYear)}</h2>
+                  <p style={{ margin: 0, fontSize: 13, color: "#999" }}>Annual Zakat Calculation Report</p>
+                </div>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button onClick={() => window.print()} style={{ ...S.headerBtn, color: "#333", border: "1px solid #ddd", background: "#fff", padding: "8px 16px", borderRadius: 8 }}>🖨 Print</button>
+                  <button onClick={() => addToast("PDF export coming soon!", "warning")} style={S.greenBtn}>📄 Download PDF</button>
+                </div>
+              </div>
+
+              <SectionCard title="Summary" color="#1B5E20">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
+                  {[
+                    ["Total Wealth", fmtFull(totalWealth), "#1B5E20"],
+                    ["Zakat Due (2.5%)", fmtFull(zakatDue), "#E65100"],
+                    ["Total Paid", fmtFull(totalPaid), "#1565C0"],
+                    ["Remaining", fmtFull(Math.max(0, remaining)), remaining <= 0 ? "#2E7D32" : "#C62828"],
+                  ].map(([label, value, color], i) => (
+                    <div key={i} style={{ textAlign: "center", padding: "16px 12px", background: "#f8f9fa", borderRadius: 10 }}>
+                      <p style={{ margin: "0 0 4px", fontSize: 11, color: "#888", fontWeight: 600, textTransform: "uppercase" }}>{label}</p>
+                      <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color }}>{value}</p>
+                    </div>
+                  ))}
+                </div>
+              </SectionCard>
+
+              <SectionCard title="Wealth Breakdown" color="#2E7D32">
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      <th style={S.th}>Category</th>
+                      <th style={{ ...S.th, textAlign: "right" }}>Amount</th>
+                      <th style={{ ...S.th, textAlign: "right" }}>Zakat (2.5%)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      ["Cash & Liquid Assets", currentYearData.cash, currentYearData.cash * 0.025],
+                      ["Gold & Jewelry", currentYearData.gold * (currentYearData.goldPrice || 0), currentYearData.gold * (currentYearData.goldPrice || 0) * 0.025],
+                      ["Investments", currentYearData.inv, currentYearData.inv * 0.025],
+                      ["Business Inventory", parseFloat(currentYearData.manualEntries.businessInventory) || 0, (parseFloat(currentYearData.manualEntries.businessInventory) || 0) * 0.025],
+                      ["Debts Owed to You", currentYearData.manualEntries.debtsOwed.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0), currentYearData.manualEntries.debtsOwed.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0) * 0.025],
+                      ["Other Assets", currentYearData.manualEntries.otherAssets.reduce((s, a) => s + (parseFloat(a.value) || 0), 0), currentYearData.manualEntries.otherAssets.reduce((s, a) => s + (parseFloat(a.value) || 0), 0) * 0.025],
+                      ["Rental Income (Net)", Math.max(0, (currentYearData.rental.monthlyIncome - currentYearData.rental.expenses) * currentYearData.rental.months), Math.max(0, (currentYearData.rental.monthlyIncome - currentYearData.rental.expenses) * currentYearData.rental.months) * 0.025],
+                      ["Mining & Minerals", currentYearData.mining.minerals + currentYearData.mining.rikaz, (currentYearData.mining.minerals + currentYearData.mining.rikaz) * 0.025],
+                    ].map(([cat, amt, zakat], i) => (
+                      <tr key={i}>
+                        <td style={S.td}>{cat}</td>
+                        <td style={{ ...S.td, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmtFull(amt)}</td>
+                        <td style={{ ...S.td, textAlign: "right", fontWeight: 600, color: "#1B5E20", fontVariantNumeric: "tabular-nums" }}>{fmtFull(zakat)}</td>
+                      </tr>
+                    ))}
+                    <tr style={{ fontWeight: 700, background: "#e8f5e9" }}>
+                      <td style={{ ...S.td, fontWeight: 700 }}>Total</td>
+                      <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{fmtFull(totalWealth)}</td>
+                      <td style={{ ...S.td, textAlign: "right", fontWeight: 700, color: "#1B5E20" }}>{fmtFull(zakatDue)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </SectionCard>
+
+              <SectionCard title="Payment History" color="#1565C0">
+                {currentYearData.payments && currentYearData.payments.length > 0 ? (
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr>
+                        <th style={S.th}>Date</th>
+                        <th style={S.th}>Recipient</th>
+                        <th style={S.th}>Method</th>
+                        <th style={{ ...S.th, textAlign: "right" }}>Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentYearData.payments.map((p, i) => (
+                        <tr key={i}>
+                          <td style={S.td}>{p.date}</td>
+                          <td style={S.td}>{p.recipient}</td>
+                          <td style={S.td}>{p.method}</td>
+                          <td style={{ ...S.td, textAlign: "right", fontWeight: 600 }}>{fmtFull(p.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p style={{ margin: 0, fontSize: 13, color: "#999", textAlign: "center", padding: "20px 0" }}>No payments recorded for this year</p>
+                )}
+              </SectionCard>
+
+              <div style={{ textAlign: "center", padding: "20px 0", color: "#ccc", fontSize: 12 }}>
+                <p>Generated by Zakatukum (زكاتكم) on {new Date().toLocaleDateString()}</p>
+                <p>This report is for personal record-keeping. Consult a qualified scholar for specific rulings.</p>
+              </div>
+            </div>
+          )}
+
+          {view === "settings" && (
+            <div style={{direction: lang === "ar" || lang === "ur" ? "rtl" : "ltr"}}>
+              <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#1B5E20" }}>{t("profile_settings")}</h2>
+              <p style={{ margin: "0 0 20px", fontSize: 13, color: "#999" }}>Manage your account preferences</p>
+
+              <SectionCard title="Personal Information" color="#1B5E20">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Name</label>
+                    <input value={userName} onChange={e => setUserName(e.target.value)} style={{ ...S.input, padding: "10px 14px" }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Email</label>
+                    <input value={userEmail} readOnly style={{ ...S.input, padding: "10px 14px", background: "#f0f0f0", color: "#999" }} />
+                  </div>
+                </div>
+              </SectionCard>
+
+              <SectionCard title="Preferences" color="#2E7D32">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Country</label>
+                    <select value={country} onChange={e => { setCountry(e.target.value); if (COUNTRY_CURRENCY[e.target.value]) setCurrency(COUNTRY_CURRENCY[e.target.value]); }} style={{ ...S.input, padding: "10px 14px", cursor: "pointer" }}>
+                      {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Currency</label>
+                    <select value={currency} onChange={e => setCurrency(e.target.value)} style={{ ...S.input, padding: "10px 14px", cursor: "pointer" }}>
+                      {Object.entries(CURRENCY_GROUPS).map(([group, codes]) => (
+                        <optgroup key={group} label={group}>
+                          {codes.map(code => { const c = CURRENCIES.find(cc => cc.code === code); return c ? <option key={code} value={code}>{c.flag} {c.name} ({code})</option> : null; })}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 6 }}>School of Thought (Madhab)</label>
+                    <select value={madhab} onChange={e => setMadhab(e.target.value)} style={{ ...S.input, padding: "10px 14px", cursor: "pointer" }}>
+                      {MADHABS.map(m => <option key={m.id} value={m.id}>{m.name} ({m.nameAr}) — {m.desc}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Language</label>
+                    <select value={lang} onChange={e => setLang(e.target.value)} style={{ ...S.input, padding: "10px 14px", cursor: "pointer" }}>
+                      {[["en","English"],["ar","العربية"],["ur","اردو"],["tr","Türkçe"],["ms","Bahasa Melayu"],["id","Bahasa Indonesia"],["fr","Français"],["es","Español"],["de","Deutsch"],["bn","বাংলা"]].map(([code, name]) => (
+                        <option key={code} value={code}>{name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ marginTop: 20, display: "flex", gap: 10 }}>
+                  <button onClick={async () => {
+                    if (!supabase || !userId) return;
+                    try {
+                      await supabase.from("profiles").upsert({ id: userId, name: userName, country, currency, madhab, lang, updated_at: new Date().toISOString() });
+                      await supabase.auth.updateUser({ data: { name: userName } });
+                      addToast("Settings saved successfully!");
+                    } catch (err) {
+                      addToast("Failed to save settings: " + err.message, "error");
+                    }
+                  }} style={S.greenBtn}>Save Settings</button>
+                </div>
+              </SectionCard>
+
+              <SectionCard title="Account" color="#C62828">
+                <p style={{ margin: "0 0 12px", fontSize: 13, color: "#666" }}>Manage your account security and data.</p>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button onClick={() => { setAuthMode("reset"); setIsLoggedIn(false); }} style={{ padding: "10px 20px", borderRadius: 10, border: "1px solid #E65100", background: "#FFF3E0", color: "#E65100", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Change Password</button>
+                  <button onClick={async () => {
+                    if (supabase) { await supabase.auth.signOut(); }
+                    setSession(null); setUserId(null); setIsLoggedIn(false); setUserName(""); setUserEmail("");
+                  }} style={{ padding: "10px 20px", borderRadius: 10, border: "1px solid #C62828", background: "#FFEBEE", color: "#C62828", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{t("sign_out")}</button>
+                </div>
+              </SectionCard>
+
+              <SectionCard title="Zakat Reminders" color="#FF6F00">
+                <p style={{ margin: "0 0 12px", fontSize: 13, color: "#666" }}>Get notified when your zakat year is approaching. We'll send a reminder to <strong>{userEmail}</strong>.</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {[
+                    ["30 days before zakat year ends", "reminder_30d"],
+                    ["7 days before zakat year ends", "reminder_7d"],
+                    ["On zakat due date", "reminder_due"],
+                    ["Monthly zakat progress summary", "reminder_monthly"],
+                  ].map(([label, id]) => (
+                    <label key={id} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "#333", cursor: "pointer", padding: "8px 12px", borderRadius: 8, background: "#f8f9fa" }}>
+                      <input type="checkbox" defaultChecked={id === "reminder_7d" || id === "reminder_due"} style={{ width: 18, height: 18, accentColor: "#1B5E20" }} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+                <button onClick={() => addToast("Reminder preferences saved!")} style={{ ...S.greenBtn, marginTop: 16, fontSize: 13, padding: "10px 20px" }}>Save Reminders</button>
+              </SectionCard>
+            </div>
+          )}
+
+          {view === "admin" && userEmail === "usman.rr@gmail.com" && (
+            <div>
+              <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#1B5E20" }}>Admin Dashboard</h2>
+              <p style={{ margin: "0 0 20px", fontSize: 13, color: "#999" }}>Application analytics and management</p>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 20 }}>
+                {[
+                  ["Total Users", "—", "#1B5E20", "Loading from DB..."],
+                  ["Active This Month", "—", "#1565C0", "Loading from DB..."],
+                  ["Zakat Calculated", "—", "#E65100", "Total across all users"],
+                  ["Countries", "—", "#7B1FA2", "User locations"],
+                ].map(([label, value, color, sub], i) => (
+                  <div key={i} style={{ padding: "16px 12px", background: "#f8f9fa", borderRadius: 10, borderLeft: `4px solid ${color}` }}>
+                    <p style={{ margin: "0 0 4px", fontSize: 11, color: "#888", fontWeight: 600, textTransform: "uppercase" }}>{label}</p>
+                    <p style={{ margin: "0 0 6px", fontSize: 24, fontWeight: 800, color }}>{value}</p>
+                    <p style={{ margin: 0, fontSize: 11, color: "#999" }}>{sub}</p>
+                  </div>
+                ))}
+              </div>
+
+              <SectionCard title="Platform Statistics" color="#1B5E20">
+                <p style={{ margin: 0, fontSize: 13, color: "#666", padding: "20px 0", textAlign: "center" }}>
+                  Admin analytics will be populated from Supabase queries.<br/>
+                  Connect to the <code>profiles</code> and <code>zakat_years</code> tables for real-time stats.
+                </p>
+              </SectionCard>
+
+              <SectionCard title="Recent Signups" color="#1565C0">
+                <p style={{ margin: 0, fontSize: 13, color: "#666", padding: "20px 0", textAlign: "center" }}>
+                  Real-time signup data will load here from Supabase auth admin API.
+                </p>
+              </SectionCard>
+            </div>
+          )}
         </main>
       </div>
 
@@ -2353,7 +2637,7 @@ export default function ZakatukumPreview() {
                 )}
                 <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
                   <button style={{ ...S.headerBtn, color: "#333", border: "1px solid #ddd" }}>🖨 Print Receipt</button>
-                  <button onClick={() => { setShowPayModal(false); setPayMethod("card"); }} style={S.greenBtn}>Done</button>
+                  <button onClick={() => { addToast("Zakat payment recorded successfully!"); setShowPayModal(false); setPayMethod("card"); }} style={S.greenBtn}>Done</button>
                 </div>
               </div>
             )}
@@ -2496,6 +2780,56 @@ export default function ZakatukumPreview() {
           </div>
         </div>
       )}
+
+      {/* Toast Notifications */}
+      <div style={{ position: "fixed", bottom: 20, right: 20, zIndex: 9999, display: "flex", flexDirection: "column", gap: 8 }}>
+        {toasts.map(toast => (
+          <div
+            key={toast.id}
+            style={{
+              padding: "12px 16px",
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              animation: "slideIn 0.3s ease-out",
+              background: toast.type === "success" ? "#E8F5E9" : toast.type === "error" ? "#FFEBEE" : "#FFF8E1",
+              color: toast.type === "success" ? "#1B5E20" : toast.type === "error" ? "#C62828" : "#E65100",
+              border: `1px solid ${toast.type === "success" ? "#A5D6A7" : toast.type === "error" ? "#EF9A9A" : "#FFB74D"}`,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              maxWidth: 300,
+            }}
+          >
+            <span>{toast.type === "success" ? "✓" : toast.type === "error" ? "✕" : "⚠"}</span>
+            <span style={{ flex: 1 }}>{toast.message}</span>
+            <button
+              onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, padding: 0, color: "inherit", opacity: 0.6 }}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes slideIn {
+          from {
+            transform: translateX(400px);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
 
       {showPlaid && (
         <div style={S.overlay} onClick={() => setShowPlaid(false)}>
