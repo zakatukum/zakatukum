@@ -584,10 +584,13 @@ export default function ZakatukumPreview() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   // ─── Mobile sidebar responsiveness ───
+  const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const handleResize = () => {
       if (typeof window !== "undefined") {
-        if (window.innerWidth < 768) {
+        const mobile = window.innerWidth < 768;
+        setIsMobile(mobile);
+        if (mobile) {
           setSidebarOpen(false);
         } else {
           setSidebarOpen(true);
@@ -1316,9 +1319,11 @@ export default function ZakatukumPreview() {
   return (
     <div style={{...S.page, direction: lang === "ar" || lang === "ur" ? "rtl" : "ltr"}}>
       <header style={S.header}>
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", "@media (max-width: 768px)": { display: "block" }, background: "none", border: "none", color: "#fff", fontSize: 24, cursor: "pointer", padding: "8px 12px", marginRight: 12 }}>
-          {sidebarOpen ? "✕" : "☰"}
-        </button>
+        {isMobile && (
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: "none", border: "none", color: "#fff", fontSize: 24, cursor: "pointer", padding: "8px 12px", marginRight: 8 }}>
+            {sidebarOpen ? "✕" : "☰"}
+          </button>
+        )}
         <div style={S.logo}>
           <div style={S.logoIcon}>☪</div>
           <div>
@@ -1399,7 +1404,8 @@ export default function ZakatukumPreview() {
       </header>
 
       <div style={{ display: "flex" }}>
-        <nav style={{...S.nav, direction: lang === "ar" || lang === "ur" ? "rtl" : "ltr", display: sidebarOpen ? "flex" : "none", "@media (min-width: 769px)": { display: "flex" }, position: "relative", "@media (max-width: 768px)": { position: "absolute", left: 0, top: 70, height: "calc(100vh - 70px)", zIndex: 99 }}}>
+        <nav style={{...S.nav, direction: lang === "ar" || lang === "ur" ? "rtl" : "ltr", ...(sidebarOpen ? {} : { display: "none" }), ...(isMobile && sidebarOpen ? { position: "absolute", left: 0, top: 60, height: "calc(100vh - 60px)", zIndex: 99, boxShadow: "4px 0 20px rgba(0,0,0,0.15)" } : {})}}>
+
           <div style={{ padding: "8px 14px 16px", borderBottom: "1px solid #f0f0f0", marginBottom: 12 }}>
             <p style={{ margin: 0, fontSize: 11, color: "#bbb", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>{t("navigation")}</p>
           </div>
