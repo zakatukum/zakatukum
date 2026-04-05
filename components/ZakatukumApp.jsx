@@ -77,18 +77,192 @@ function getHijriYear(gregYear) {
   return h.year;
 }
 
-const ORGS = [
-  { id: 1, name: "Islamic Relief USA", desc: "Nationwide relief, zakat-verified", flag: "🇺🇸", method: "stripe", cat: "Relief" },
-  { id: 2, name: "ICNA Relief", desc: "Domestic poverty relief, food pantries", flag: "🇺🇸", method: "stripe", cat: "Poverty" },
-  { id: 3, name: "Zakat Foundation of America", desc: "Dedicated zakat distribution", flag: "🇺🇸", method: "stripe", cat: "Zakat" },
-  { id: 4, name: "Helping Hand (HHRD)", desc: "Global humanitarian, orphan care", flag: "🇺🇸", method: "stripe", cat: "Relief" },
-  { id: 5, name: "Muslim Aid USA", desc: "Refugee support, emergency aid", flag: "🇺🇸", method: "stripe", cat: "Refugee" },
-  { id: 6, name: "Edhi Foundation", desc: "Healthcare, orphanages across Pakistan", flag: "🇵🇰", method: "wire", cat: "Healthcare" },
-  { id: 7, name: "Islamic Relief Worldwide", desc: "Global programs in 40+ countries", flag: "🇬🇧", method: "wire", cat: "Relief" },
-  { id: 8, name: "Palestine Red Crescent", desc: "Medical & humanitarian services", flag: "🇵🇸", method: "wire", cat: "Medical" },
-  { id: 9, name: "Al Khidmat Foundation", desc: "Disaster relief, medical camps", flag: "🇵🇰", method: "wire", cat: "Relief" },
-  { id: 10, name: "Qatar Charity", desc: "Global development & education", flag: "🇶🇦", method: "wire", cat: "Education" },
+// ─── Country-specific Data ───
+const COUNTRIES = [
+  { code: "GLOBAL", name: "International / Global", flag: "🌍", region: "Global" },
+  { code: "US", name: "United States", flag: "🇺🇸", region: "Americas" },
+  { code: "CA", name: "Canada", flag: "🇨🇦", region: "Americas" },
+  { code: "GB", name: "United Kingdom", flag: "🇬🇧", region: "Europe" },
+  { code: "DE", name: "Germany", flag: "🇩🇪", region: "Europe" },
+  { code: "FR", name: "France", flag: "🇫🇷", region: "Europe" },
+  { code: "SE", name: "Sweden", flag: "🇸🇪", region: "Europe" },
+  { code: "NO", name: "Norway", flag: "🇳🇴", region: "Europe" },
+  { code: "NL", name: "Netherlands", flag: "🇳🇱", region: "Europe" },
+  { code: "SA", name: "Saudi Arabia", flag: "🇸🇦", region: "Gulf" },
+  { code: "AE", name: "United Arab Emirates", flag: "🇦🇪", region: "Gulf" },
+  { code: "QA", name: "Qatar", flag: "🇶🇦", region: "Gulf" },
+  { code: "KW", name: "Kuwait", flag: "🇰🇼", region: "Gulf" },
+  { code: "BH", name: "Bahrain", flag: "🇧🇭", region: "Gulf" },
+  { code: "OM", name: "Oman", flag: "🇴🇲", region: "Gulf" },
+  { code: "IQ", name: "Iraq", flag: "🇮🇶", region: "Middle East" },
+  { code: "JO", name: "Jordan", flag: "🇯🇴", region: "Middle East" },
+  { code: "LB", name: "Lebanon", flag: "🇱🇧", region: "Middle East" },
+  { code: "PS", name: "Palestine", flag: "🇵🇸", region: "Middle East" },
+  { code: "TR", name: "Turkey", flag: "🇹🇷", region: "Middle East" },
+  { code: "EG", name: "Egypt", flag: "🇪🇬", region: "Africa" },
+  { code: "MA", name: "Morocco", flag: "🇲🇦", region: "Africa" },
+  { code: "NG", name: "Nigeria", flag: "🇳🇬", region: "Africa" },
+  { code: "ZA", name: "South Africa", flag: "🇿🇦", region: "Africa" },
+  { code: "SD", name: "Sudan", flag: "🇸🇩", region: "Africa" },
+  { code: "SO", name: "Somalia", flag: "🇸🇴", region: "Africa" },
+  { code: "KE", name: "Kenya", flag: "🇰🇪", region: "Africa" },
+  { code: "PK", name: "Pakistan", flag: "🇵🇰", region: "South Asia" },
+  { code: "IN", name: "India", flag: "🇮🇳", region: "South Asia" },
+  { code: "BD", name: "Bangladesh", flag: "🇧🇩", region: "South Asia" },
+  { code: "MY", name: "Malaysia", flag: "🇲🇾", region: "Southeast Asia" },
+  { code: "ID", name: "Indonesia", flag: "🇮🇩", region: "Southeast Asia" },
+  { code: "SG", name: "Singapore", flag: "🇸🇬", region: "Southeast Asia" },
+  { code: "AU", name: "Australia", flag: "🇦🇺", region: "Pacific" },
 ];
+
+const COUNTRY_BANKS = {
+  GLOBAL: ["Any Bank (Manual Entry)"],
+  US: ["Chase", "Bank of America", "Wells Fargo", "Citi", "US Bank", "Capital One", "PNC", "TD Bank"],
+  CA: ["RBC", "TD Canada Trust", "BMO", "Scotiabank", "CIBC", "National Bank"],
+  GB: ["HSBC UK", "Barclays", "Lloyds", "NatWest", "Monzo", "Starling Bank", "Revolut"],
+  DE: ["Deutsche Bank", "Commerzbank", "DKB", "ING Germany", "N26", "Sparkasse"],
+  FR: ["BNP Paribas", "Société Générale", "Crédit Agricole", "CIC", "Boursorama"],
+  SE: ["Swedbank", "SEB", "Nordea", "Handelsbanken", "Danske Bank"],
+  NO: ["DNB", "Nordea Norway", "SpareBank 1", "Handelsbanken Norway"],
+  NL: ["ING", "ABN AMRO", "Rabobank", "SNS Bank", "Bunq"],
+  SA: ["Al Rajhi Bank", "National Commercial Bank (NCB)", "Riyad Bank", "SABB", "Alinma Bank", "Bank AlJazira"],
+  AE: ["Emirates NBD", "Abu Dhabi Commercial Bank", "Mashreq Bank", "FAB", "Dubai Islamic Bank", "RAK Bank"],
+  QA: ["Qatar National Bank (QNB)", "Commercial Bank of Qatar", "Doha Bank", "Qatar Islamic Bank", "Masraf Al Rayan"],
+  KW: ["National Bank of Kuwait", "Kuwait Finance House", "Burgan Bank", "Gulf Bank", "Boubyan Bank"],
+  BH: ["Bank of Bahrain", "National Bank of Bahrain", "Al Salam Bank", "Ithmaar Bank", "Ahli United Bank"],
+  OM: ["Bank Muscat", "National Bank of Oman", "Bank Dhofar", "Oman Arab Bank", "Sohar International"],
+  IQ: ["Rafidain Bank", "Rasheed Bank", "Trade Bank of Iraq", "Kurdistan International Bank"],
+  JO: ["Arab Bank", "Housing Bank", "Jordan Ahli Bank", "Bank of Jordan", "Cairo Amman Bank"],
+  LB: ["Bank Audi", "Blom Bank", "Byblos Bank", "Fransabank", "Bank of Beirut"],
+  PS: ["Bank of Palestine", "Palestine Islamic Bank", "Arab Islamic Bank", "Cairo Amman Bank Palestine"],
+  TR: ["Ziraat Bankası", "İş Bankası", "Garanti BBVA", "Yapı Kredi", "QNB Finansbank", "Kuveyt Türk", "Albaraka Türk"],
+  EG: ["National Bank of Egypt", "Banque Misr", "CIB Egypt", "QNB Alahli", "Faisal Islamic Bank"],
+  MA: ["Attijariwafa Bank", "BMCE Bank", "Banque Populaire", "CIH Bank", "Crédit du Maroc"],
+  NG: ["GTBank", "Zenith Bank", "Access Bank", "First Bank Nigeria", "UBA", "Jaiz Bank"],
+  ZA: ["FNB", "Standard Bank", "Absa", "Nedbank", "Capitec", "Al Baraka Bank SA"],
+  SD: ["Bank of Khartoum", "Faisal Islamic Bank Sudan", "Omdurman National Bank", "Blue Nile Mashreq Bank"],
+  SO: ["Dahabshiil Bank", "Premier Bank Somalia", "Salaam Somali Bank", "IBS Bank"],
+  KE: ["KCB", "Equity Bank", "Cooperative Bank", "Standard Chartered Kenya", "Gulf African Bank"],
+  PK: ["Meezan Bank", "HBL", "UBL", "MCB", "Allied Bank", "Bank Alfalah", "Faysal Bank", "Bank Islami"],
+  IN: ["SBI", "HDFC Bank", "ICICI Bank", "Axis Bank", "Kotak Mahindra", "Bank of Baroda"],
+  BD: ["Islami Bank Bangladesh", "Dutch-Bangla Bank", "BRAC Bank", "Southeast Bank", "Al-Arafah Islami Bank"],
+  MY: ["Maybank", "CIMB", "Public Bank", "Bank Islam", "AmBank", "RHB Bank", "Bank Muamalat"],
+  ID: ["Bank Mandiri", "BCA", "BRI", "BNI", "Bank Syariah Indonesia", "CIMB Niaga"],
+  SG: ["DBS", "OCBC", "UOB", "Standard Chartered Singapore", "Maybank Singapore"],
+  AU: ["Commonwealth Bank", "ANZ", "Westpac", "NAB", "Macquarie", "ING Australia"],
+};
+
+const COUNTRY_ORGS = {
+  GLOBAL: [
+    { id: 1, name: "Islamic Relief Worldwide", desc: "Global programs in 40+ countries", flag: "🌍", method: "wire", cat: "Relief" },
+    { id: 2, name: "Muslim Aid", desc: "International humanitarian organization", flag: "🌍", method: "wire", cat: "Relief" },
+    { id: 3, name: "International Islamic Charity Org", desc: "Global zakat distribution network", flag: "🌍", method: "wire", cat: "Zakat" },
+    { id: 4, name: "Palestine Red Crescent", desc: "Medical & humanitarian services", flag: "🇵🇸", method: "wire", cat: "Medical" },
+    { id: 5, name: "UNHCR (Zakat Fund)", desc: "UN Refugee Zakat Fund — Sharia compliant", flag: "🌍", method: "wire", cat: "Refugee" },
+    { id: 6, name: "Penny Appeal", desc: "Global charity, education & orphans", flag: "🌍", method: "wire", cat: "Education" },
+  ],
+  US: [
+    { id: 101, name: "Islamic Relief USA", desc: "Nationwide relief, zakat-verified", flag: "🇺🇸", method: "stripe", cat: "Relief" },
+    { id: 102, name: "ICNA Relief", desc: "Domestic poverty relief, food pantries", flag: "🇺🇸", method: "stripe", cat: "Poverty" },
+    { id: 103, name: "Zakat Foundation of America", desc: "Dedicated zakat distribution across US", flag: "🇺🇸", method: "stripe", cat: "Zakat" },
+    { id: 104, name: "Helping Hand (HHRD)", desc: "Global humanitarian, orphan care", flag: "🇺🇸", method: "stripe", cat: "Relief" },
+    { id: 105, name: "Muslim Aid USA", desc: "Refugee support, emergency aid", flag: "🇺🇸", method: "stripe", cat: "Refugee" },
+    { id: 106, name: "CAIR", desc: "Civil rights and community welfare", flag: "🇺🇸", method: "stripe", cat: "Community" },
+  ],
+  CA: [
+    { id: 201, name: "Islamic Relief Canada", desc: "Canadian zakat distribution", flag: "🇨🇦", method: "stripe", cat: "Relief" },
+    { id: 202, name: "Human Concern International", desc: "Humanitarian aid, Canada-based", flag: "🇨🇦", method: "stripe", cat: "Relief" },
+    { id: 203, name: "National Zakat Foundation Canada", desc: "Local zakat collection and distribution", flag: "🇨🇦", method: "stripe", cat: "Zakat" },
+    { id: 204, name: "Muslim Welfare Canada", desc: "Community support services", flag: "🇨🇦", method: "stripe", cat: "Community" },
+  ],
+  GB: [
+    { id: 301, name: "Islamic Relief UK", desc: "Largest Muslim charity in UK", flag: "🇬🇧", method: "stripe", cat: "Relief" },
+    { id: 302, name: "Muslim Aid UK", desc: "Poverty relief and education", flag: "🇬🇧", method: "stripe", cat: "Relief" },
+    { id: 303, name: "National Zakat Foundation UK", desc: "UK-focused zakat distribution", flag: "🇬🇧", method: "stripe", cat: "Zakat" },
+    { id: 304, name: "Muslim Hands", desc: "International development charity", flag: "🇬🇧", method: "stripe", cat: "Relief" },
+    { id: 305, name: "Interpal", desc: "Palestine focused humanitarian", flag: "🇬🇧", method: "stripe", cat: "Relief" },
+  ],
+  SA: [
+    { id: 401, name: "Saudi Red Crescent", desc: "National humanitarian services", flag: "🇸🇦", method: "wire", cat: "Relief" },
+    { id: 402, name: "King Salman Humanitarian Aid", desc: "Royal relief center", flag: "🇸🇦", method: "wire", cat: "Relief" },
+    { id: 403, name: "Ehsan Platform", desc: "Official Saudi donation platform", flag: "🇸🇦", method: "wire", cat: "Zakat" },
+    { id: 404, name: "International Islamic Relief Org", desc: "Makkah-based international charity", flag: "🇸🇦", method: "wire", cat: "Relief" },
+  ],
+  AE: [
+    { id: 501, name: "Emirates Red Crescent", desc: "UAE national humanitarian body", flag: "🇦🇪", method: "wire", cat: "Relief" },
+    { id: 502, name: "Dubai Cares", desc: "Education in developing countries", flag: "🇦🇪", method: "wire", cat: "Education" },
+    { id: 503, name: "Zakat Fund UAE", desc: "Official UAE zakat authority", flag: "🇦🇪", method: "wire", cat: "Zakat" },
+    { id: 504, name: "Sharjah Charity International", desc: "Humanitarian programs", flag: "🇦🇪", method: "wire", cat: "Relief" },
+  ],
+  QA: [
+    { id: 601, name: "Qatar Charity", desc: "Global development & education", flag: "🇶🇦", method: "wire", cat: "Education" },
+    { id: 602, name: "Qatar Red Crescent", desc: "National humanitarian services", flag: "🇶🇦", method: "wire", cat: "Relief" },
+    { id: 603, name: "Eid Charity (RAF)", desc: "Relief and development globally", flag: "🇶🇦", method: "wire", cat: "Relief" },
+  ],
+  PK: [
+    { id: 701, name: "Edhi Foundation", desc: "Healthcare, orphanages, ambulances", flag: "🇵🇰", method: "wire", cat: "Healthcare" },
+    { id: 702, name: "Al Khidmat Foundation", desc: "Disaster relief, medical camps", flag: "🇵🇰", method: "wire", cat: "Relief" },
+    { id: 703, name: "JDC Foundation", desc: "Community development, welfare", flag: "🇵🇰", method: "wire", cat: "Community" },
+    { id: 704, name: "Saylani Welfare Trust", desc: "Largest food kitchen, education", flag: "🇵🇰", method: "wire", cat: "Welfare" },
+    { id: 705, name: "Akhuwat Foundation", desc: "Interest-free microfinance", flag: "🇵🇰", method: "wire", cat: "Finance" },
+    { id: 706, name: "Shaukat Khanum Hospital", desc: "Cancer treatment for underprivileged", flag: "🇵🇰", method: "wire", cat: "Healthcare" },
+  ],
+  IN: [
+    { id: 801, name: "Zakat Foundation of India", desc: "Education, healthcare, empowerment", flag: "🇮🇳", method: "wire", cat: "Zakat" },
+    { id: 802, name: "Islamic Relief India", desc: "Humanitarian aid and development", flag: "🇮🇳", method: "wire", cat: "Relief" },
+    { id: 803, name: "Mercy Mission India", desc: "Community welfare, education", flag: "🇮🇳", method: "wire", cat: "Education" },
+    { id: 804, name: "Association of Muslim Professionals", desc: "Skills & livelihood programs", flag: "🇮🇳", method: "wire", cat: "Community" },
+  ],
+  BD: [
+    { id: 901, name: "Islamic Relief Bangladesh", desc: "Disaster response, education", flag: "🇧🇩", method: "wire", cat: "Relief" },
+    { id: 902, name: "Muslim Aid Bangladesh", desc: "Community development programs", flag: "🇧🇩", method: "wire", cat: "Community" },
+    { id: 903, name: "Center for Zakat Management", desc: "Professional zakat distribution", flag: "🇧🇩", method: "wire", cat: "Zakat" },
+  ],
+  TR: [
+    { id: 1001, name: "IHH Humanitarian Relief", desc: "Global aid from Turkey", flag: "🇹🇷", method: "wire", cat: "Relief" },
+    { id: 1002, name: "Diyanet Foundation", desc: "Official religious affairs foundation", flag: "🇹🇷", method: "wire", cat: "Zakat" },
+    { id: 1003, name: "Türk Kızılay (Red Crescent)", desc: "Turkish national humanitarian", flag: "🇹🇷", method: "wire", cat: "Relief" },
+    { id: 1004, name: "Deniz Feneri", desc: "Social aid and development", flag: "🇹🇷", method: "wire", cat: "Welfare" },
+  ],
+  EG: [
+    { id: 1101, name: "Misr El Kheir Foundation", desc: "Largest Egyptian development NGO", flag: "🇪🇬", method: "wire", cat: "Relief" },
+    { id: 1102, name: "Egyptian Red Crescent", desc: "National humanitarian services", flag: "🇪🇬", method: "wire", cat: "Relief" },
+    { id: 1103, name: "Orman Association", desc: "Community welfare since 1960", flag: "🇪🇬", method: "wire", cat: "Community" },
+    { id: 1104, name: "Resala Charity", desc: "Youth-led volunteering and aid", flag: "🇪🇬", method: "wire", cat: "Community" },
+  ],
+  MY: [
+    { id: 1201, name: "Lembaga Zakat Selangor", desc: "State zakat authority (Selangor)", flag: "🇲🇾", method: "wire", cat: "Zakat" },
+    { id: 1202, name: "Pusat Pungutan Zakat (PPZ)", desc: "Federal Territories zakat center", flag: "🇲🇾", method: "wire", cat: "Zakat" },
+    { id: 1203, name: "Islamic Relief Malaysia", desc: "Malaysian humanitarian programs", flag: "🇲🇾", method: "wire", cat: "Relief" },
+    { id: 1204, name: "Global Peace Mission", desc: "Relief and disaster response", flag: "🇲🇾", method: "wire", cat: "Relief" },
+  ],
+  ID: [
+    { id: 1301, name: "BAZNAS", desc: "National zakat agency of Indonesia", flag: "🇮🇩", method: "wire", cat: "Zakat" },
+    { id: 1302, name: "Dompet Dhuafa", desc: "Social enterprise and humanitarian", flag: "🇮🇩", method: "wire", cat: "Relief" },
+    { id: 1303, name: "Rumah Zakat", desc: "Empowerment-based zakat distribution", flag: "🇮🇩", method: "wire", cat: "Zakat" },
+    { id: 1304, name: "Lazismu (Muhammadiyah)", desc: "Zakat through Muhammadiyah network", flag: "🇮🇩", method: "wire", cat: "Zakat" },
+  ],
+  NG: [
+    { id: 1401, name: "Muslim Corpers Association", desc: "Community welfare, youth empowerment", flag: "🇳🇬", method: "wire", cat: "Community" },
+    { id: 1402, name: "Zakat & Sadaqat Foundation", desc: "Zakat distribution across Nigeria", flag: "🇳🇬", method: "wire", cat: "Zakat" },
+    { id: 1403, name: "Muslim Aid Nigeria", desc: "Education and poverty relief", flag: "🇳🇬", method: "wire", cat: "Relief" },
+  ],
+  ZA: [
+    { id: 1501, name: "South African National Zakah Fund", desc: "National zakat collection body", flag: "🇿🇦", method: "wire", cat: "Zakat" },
+    { id: 1502, name: "Africa Muslims Agency", desc: "Community development programs", flag: "🇿🇦", method: "wire", cat: "Community" },
+    { id: 1503, name: "Islamic Relief South Africa", desc: "Humanitarian programs in Southern Africa", flag: "🇿🇦", method: "wire", cat: "Relief" },
+    { id: 1504, name: "Gift of the Givers", desc: "Largest African disaster response NGO", flag: "🇿🇦", method: "wire", cat: "Relief" },
+  ],
+  AU: [
+    { id: 1601, name: "National Zakat Foundation Australia", desc: "Australian zakat collection", flag: "🇦🇺", method: "stripe", cat: "Zakat" },
+    { id: 1602, name: "Islamic Relief Australia", desc: "Australian humanitarian programs", flag: "🇦🇺", method: "stripe", cat: "Relief" },
+    { id: 1603, name: "Human Appeal Australia", desc: "Emergency relief and development", flag: "🇦🇺", method: "stripe", cat: "Relief" },
+  ],
+};
+
+// Fallback: countries without specific orgs use GLOBAL
+const getCountryOrgs = (countryCode) => COUNTRY_ORGS[countryCode] || COUNTRY_ORGS.GLOBAL;
+const getCountryBanks = (countryCode) => COUNTRY_BANKS[countryCode] || COUNTRY_BANKS.GLOBAL;
 
 const CONNECTED_BANKS = [];
 
@@ -306,6 +480,7 @@ export default function ZakatukumPreview() {
   const [lang, setLang] = useState("en");
   const [madhab, setMadhab] = useState("hanafi");
   const [currency, setCurrency] = useState("USD");
+  const [country, setCountry] = useState("GLOBAL");
 
   // Currency-aware formatters
   const currencyInfo = CURRENCIES.find(c => c.code === currency) || CURRENCIES[0];
@@ -555,7 +730,10 @@ export default function ZakatukumPreview() {
     { name: "Cash at Home", value: parseFloat(currentYearData.manualEntries.cashHome || 0) },
   ].filter(d => d.value > 0);
 
-  const filteredOrgs = ORGS.filter(o =>
+  const countryOrgs = getCountryOrgs(country);
+  const countryBanks = getCountryBanks(country);
+  const countryInfo = COUNTRIES.find(c => c.code === country) || COUNTRIES[0];
+  const filteredOrgs = countryOrgs.filter(o =>
     o.name.toLowerCase().includes(orgSearch.toLowerCase()) ||
     o.desc.toLowerCase().includes(orgSearch.toLowerCase())
   );
@@ -673,6 +851,21 @@ export default function ZakatukumPreview() {
                 </div>
               )}
 
+              {authMode === "signup" && (
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Country</label>
+                  <select value={country} onChange={e => setCountry(e.target.value)} style={{ ...S.input, padding: "12px 14px", fontSize: 14, cursor: "pointer" }}>
+                    <option value="GLOBAL">🌍 International / Global</option>
+                    {Object.entries(COUNTRIES.reduce((groups, c) => { if (c.code !== "GLOBAL") { (groups[c.region] = groups[c.region] || []).push(c); } return groups; }, {})).map(([region, countries]) => (
+                      <optgroup key={region} label={region}>
+                        {countries.map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <p style={{ margin: "6px 0 0", fontSize: 11, color: "#888" }}>Shows local banks and zakat charities for your country</p>
+                </div>
+              )}
+
               {authError && <p style={{ margin: "0 0 16px", fontSize: 13, color: "#C62828", fontWeight: 600 }}>{authError}</p>}
 
               <button type="submit" style={{ ...S.greenBtn, width: "100%", padding: "14px 0", fontSize: 16, borderRadius: 10 }}>
@@ -732,6 +925,14 @@ export default function ZakatukumPreview() {
             <option value="es">Español</option>
             <option value="de">Deutsch</option>
             <option value="bn">বাংলা</option>
+          </select>
+          <select value={country} onChange={e => setCountry(e.target.value)} style={{ ...S.yearSelect, maxWidth: 120 }}>
+            <option value="GLOBAL">🌍 Global</option>
+            {Object.entries(COUNTRIES.reduce((groups, c) => { if (c.code !== "GLOBAL") { (groups[c.region] = groups[c.region] || []).push(c); } return groups; }, {})).map(([region, countries]) => (
+              <optgroup key={region} label={region}>
+                {countries.map(c => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
+              </optgroup>
+            ))}
           </select>
           <select value={currency} onChange={e => setCurrency(e.target.value)} style={{ ...S.yearSelect, maxWidth: 130 }}>
             {Object.entries(CURRENCY_GROUPS).map(([group, codes]) => (
@@ -1287,7 +1488,14 @@ export default function ZakatukumPreview() {
           {view === "pay" && (
             <div style={{direction: lang === "ar" || lang === "ur" ? "rtl" : "ltr"}}>
               <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#1B5E20" }}>{t("pay_zakat")}</h2>
-              <p style={{ margin: "0 0 20px", fontSize: 13, color: "#999" }}>Send zakat directly to verified organizations via Stripe (US) or wire transfer (international)</p>
+              <p style={{ margin: "0 0 12px", fontSize: 13, color: "#999" }}>Send zakat directly to verified organizations {country === "GLOBAL" ? "worldwide" : `in ${countryInfo.name}`}</p>
+              <div style={{ padding: "10px 14px", marginBottom: 16, borderRadius: 8, background: "#E3F2FD", border: "1px solid #90CAF9", fontSize: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span><span style={{ fontWeight: 700, color: "#1565C0" }}>{countryInfo.flag} {countryInfo.name}</span> — Showing {countryOrgs.length} verified organizations and {countryBanks.length} local banks</span>
+                <select value={country} onChange={e => setCountry(e.target.value)} style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #90CAF9", background: "#fff", fontSize: 11, cursor: "pointer" }}>
+                  <option value="GLOBAL">🌍 Global</option>
+                  {COUNTRIES.filter(c => c.code !== "GLOBAL").map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
+                </select>
+              </div>
 
               <SectionCard title={t("connected_banks")} color="#1565C0" action={<button onClick={() => { setPlaidStep(0); setShowPlaid(true); }} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "#fff", cursor: "pointer", borderRadius: 6, padding: "4px 12px", fontSize: 12, fontWeight: 600 }}>+ {t("connect_bank")}</button>}>
                 <div style={{ display: "flex", gap: 12 }}>
@@ -1696,7 +1904,8 @@ export default function ZakatukumPreview() {
                 </div>
                 <div style={{ padding: "24px" }}>
                   <input placeholder="Search institutions..." style={{ ...S.input, marginBottom: 12, padding: "10px 14px" }} />
-                  {["Chase", "Bank of America", "Wells Fargo", "Fidelity", "Vanguard", "Coinbase"].map((b, i) => (
+                  <p style={{ margin: "0 0 8px", fontSize: 11, color: "#1565C0", fontWeight: 600 }}>{countryInfo.flag} Banks in {countryInfo.name}</p>
+                  {countryBanks.map((b, i) => (
                     <div key={i} onClick={() => { setSelectedInstitution(b); setConnectStep(2); }} style={{ padding: "12px 14px", borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }} onMouseEnter={e => e.currentTarget.style.background = "#f5f5f5"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                       <div style={{ width: 36, height: 36, borderRadius: 8, background: "#e3f2fd", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🏦</div>
                       <span style={{ fontSize: 14, fontWeight: 600 }}>{b}</span>
@@ -1764,7 +1973,8 @@ export default function ZakatukumPreview() {
                 </div>
                 <div style={{ padding: "16px 24px" }}>
                   <input placeholder="Search your bank..." style={{ ...S.input, marginBottom: 12, padding: "10px 14px" }} />
-                  {["Chase", "Bank of America", "Wells Fargo", "Citi", "US Bank", "Capital One"].map((b, i) => (
+                  <p style={{ margin: "0 0 8px", fontSize: 11, color: "#1565C0", fontWeight: 600 }}>{countryInfo.flag} Banks in {countryInfo.name}</p>
+                  {countryBanks.slice(0, 6).map((b, i) => (
                     <div key={i} onClick={() => setPlaidStep(1)} style={{ padding: "12px 14px", borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }} onMouseEnter={e => e.currentTarget.style.background = "#f5f5f5"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                       <div style={{ width: 36, height: 36, borderRadius: 8, background: "#e3f2fd", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🏦</div>
                       <span style={{ fontSize: 14, fontWeight: 600 }}>{b}</span>
