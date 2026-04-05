@@ -550,54 +550,9 @@ export default function ZakatukumPreview() {
     rental: { monthlyIncome: 0, expenses: 0, months: 12 },
   };
 
-  // ─── Historical sample data (5 years) ───
-  const historicalData = {
-    [`${currentGreg}-${currentHijri}`]: { ...emptyYearData },
-    [`${currentGreg - 1}-${currentHijri - 1}`]: {
-      ...emptyYearData, goldPrice: 72, cash: 15200, inv: 32000, gold: 45, paid: 1575, due: 1575,
-      manualEntries: { ...emptyYearData.manualEntries, businessInventory: "8500", debtsOwed: [{ person: "Ahmad", amount: "3000", expectedDate: "2025-06" }] },
-      rental: { monthlyIncome: 1800, expenses: 400, months: 12 },
-      payments: [
-        { date: "2025-03-12", recipient: "Islamic Relief USA", method: "Zelle", amount: 800 },
-        { date: "2025-06-20", recipient: "Zakat Foundation", method: "Paid Directly", amount: 775 },
-      ],
-    },
-    [`${currentGreg - 2}-${currentHijri - 2}`]: {
-      ...emptyYearData, goldPrice: 65, cash: 12800, inv: 28500, gold: 40, paid: 1350, due: 1350,
-      manualEntries: { ...emptyYearData.manualEntries, businessInventory: "6000" },
-      rental: { monthlyIncome: 1600, expenses: 350, months: 12 },
-      payments: [
-        { date: "2024-04-01", recipient: "ICNA Relief", method: "PayPal", amount: 700 },
-        { date: "2024-07-15", recipient: "Muslim Aid UK", method: "Wire Transfer", amount: 650 },
-      ],
-    },
-    [`${currentGreg - 3}-${currentHijri - 3}`]: {
-      ...emptyYearData, goldPrice: 58, cash: 9500, inv: 22000, gold: 35, paid: 1050, due: 1050,
-      manualEntries: { ...emptyYearData.manualEntries, businessInventory: "4200" },
-      rental: { monthlyIncome: 1400, expenses: 300, months: 12 },
-      payments: [
-        { date: "2023-03-28", recipient: "Helping Hand (HHRD)", method: "Credit Card", amount: 550 },
-        { date: "2023-08-10", recipient: "Islamic Relief Canada", method: "Paid Directly", amount: 500 },
-      ],
-    },
-    [`${currentGreg - 4}-${currentHijri - 4}`]: {
-      ...emptyYearData, goldPrice: 55, cash: 7200, inv: 18000, gold: 30, paid: 800, due: 800,
-      manualEntries: { ...emptyYearData.manualEntries, businessInventory: "3000" },
-      rental: { monthlyIncome: 1200, expenses: 250, months: 12 },
-      payments: [
-        { date: "2022-04-15", recipient: "National Zakat Foundation", method: "Bank Transfer", amount: 800 },
-      ],
-    },
-    [`${currentGreg - 5}-${currentHijri - 5}`]: {
-      ...emptyYearData, goldPrice: 50, cash: 5000, inv: 12000, gold: 25, paid: 575, due: 575,
-      manualEntries: { ...emptyYearData.manualEntries, businessInventory: "2000" },
-      payments: [
-        { date: "2021-05-02", recipient: "Muslim Hands", method: "Paid Directly", amount: 575 },
-      ],
-    },
-  };
-
-  const [yearlyData, setYearlyData] = useState(historicalData);
+  const [yearlyData, setYearlyData] = useState({
+    [defaultYearKey]: { ...emptyYearData }
+  });
   const [selectedYear, setSelectedYear] = useState(defaultYearKey);
 
   const [showPayModal, setShowPayModal] = useState(false);
@@ -2257,13 +2212,18 @@ export default function ZakatukumPreview() {
                 <div style={{ display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap" }}>
                   {/* Year Selector */}
                   <div style={{ minWidth: 200 }}>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Year Range</label>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Select Year</label>
                     <select value={reportYear} onChange={e => setReportYear(e.target.value)} style={{ ...S.input, padding: "10px 14px", cursor: "pointer" }}>
-                      <option value="all">All Years ({Object.keys(yearlyData).length} years)</option>
+                      {Object.keys(yearlyData).length > 1 && (
+                        <option value="all">All Years ({Object.keys(yearlyData).length} years)</option>
+                      )}
                       {Object.keys(yearlyData).sort((a, b) => b.localeCompare(a)).map(yk => (
                         <option key={yk} value={yk}>{formatYearDisplay(yk)}</option>
                       ))}
                     </select>
+                    {Object.keys(yearlyData).length === 1 && (
+                      <p style={{ margin: "6px 0 0", fontSize: 11, color: "#888" }}>Add more years to compare across years</p>
+                    )}
                   </div>
                   {/* Section Toggles */}
                   <div style={{ flex: 1, minWidth: 300 }}>
@@ -2273,8 +2233,7 @@ export default function ZakatukumPreview() {
                         ["summary", "Summary"],
                         ["breakdown", "Wealth Breakdown"],
                         ["payments", "Payment History"],
-                        ["historical", "Historical Comparison"],
-                        ["chart", "Trend Chart"],
+                        ...(Object.keys(yearlyData).length > 1 ? [["historical", "Historical Comparison"], ["chart", "Trend Chart"]] : []),
                       ].map(([key, label]) => (
                         <label key={key} onClick={() => toggleReportSection(key)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 8, border: `2px solid ${reportSections[key] ? "#1B5E20" : "#e0e0e0"}`, background: reportSections[key] ? "#E8F5E9" : "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, color: reportSections[key] ? "#1B5E20" : "#999", transition: "all 0.15s" }}>
                           {reportSections[key] ? "✓" : "○"} {label}
@@ -2301,7 +2260,13 @@ export default function ZakatukumPreview() {
                       </div>
                     ))}
                   </div>
-                  {reportYear === "all" && <p style={{ margin: "12px 0 0", fontSize: 11, color: "#888", textAlign: "center" }}>Aggregated across {reportYears.length} years</p>}
+                  {reportYear === "all" && reportYears.length > 1 && <p style={{ margin: "12px 0 0", fontSize: 11, color: "#888", textAlign: "center" }}>Aggregated across {reportYears.length} years</p>}
+                  {(reportYear === "all" ? totalAllWealth : reportData[0]?.wealth || 0) === 0 && (
+                    <div style={{ margin: "16px 0 0", padding: "16px 20px", borderRadius: 10, background: "#FFF8E1", border: "1px solid #FFE082", textAlign: "center" }}>
+                      <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 600, color: "#E65100" }}>No data entered yet</p>
+                      <p style={{ margin: 0, fontSize: 12, color: "#5D4037" }}>Go to the <strong>Calculator</strong> tab to enter your assets, then come back here to see your report.</p>
+                    </div>
+                  )}
                 </SectionCard>
               )}
 
