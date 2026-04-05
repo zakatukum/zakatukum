@@ -1911,14 +1911,14 @@ export default function ZakatukumPreview() {
                       </div>
                       <p style={{ margin: 0, fontSize: 12, color: "#888" }}>{org.desc}</p>
                       <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                        <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: org.method === "stripe" ? "#EDE7F6" : "#E3F2FD", color: org.method === "stripe" ? "#635BFF" : "#1565C0", fontWeight: 700 }}>
-                          {org.method === "stripe" ? "💳 Stripe" : "🏦 Wire"}
+                        <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: "#EDE7F6", color: "#635BFF", fontWeight: 700 }}>
+                          💳 Online Payment
                         </span>
                         <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: "#E8F5E9", color: "#1B5E20", fontWeight: 700 }}>✓ Zakat Verified</span>
                       </div>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
-                      <button onClick={() => openPay(org)} style={{ ...S.greenBtn, fontSize: 12, padding: "7px 14px", whiteSpace: "nowrap" }}>Pay via Stripe →</button>
+                      <button onClick={() => openPay(org)} style={{ ...S.greenBtn, fontSize: 12, padding: "7px 14px", whiteSpace: "nowrap" }}>Pay Online →</button>
                       <button onClick={() => { setSelectedOrg(org); setPayAmount(Math.max(0, remaining).toFixed(2)); setPayMethod(""); setPayStep(2); setShowPayModal(true); }} style={{ padding: "7px 14px", borderRadius: 8, border: "2px solid #2E7D32", background: "#fff", color: "#2E7D32", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>✓ I Paid Directly</button>
                     </div>
                   </div>
@@ -2120,76 +2120,201 @@ export default function ZakatukumPreview() {
                   <input value={payAmount} onChange={e => setPayAmount(e.target.value)} style={{ ...S.input, ...S.numInput, marginTop: 6, fontSize: 24, fontWeight: 800, color: "#1B5E20", padding: "12px 16px" }} />
                   <p style={{ margin: "6px 0 16px", fontSize: 12, color: "#999" }}>Remaining zakat: {fmtFull(Math.max(0, remaining))}</p>
 
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 8 }}>{t("method")}</label>
-                  {selectedOrg?.method === "stripe" ? (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {/* Stripe fee warning inside modal */}
-                      <div style={{ padding: "10px 14px", borderRadius: 8, background: "#FFF8E1", border: "1px solid #FFB74D", fontSize: 12, color: "#5D4037", lineHeight: 1.5 }}>
-                        <span style={{ fontWeight: 700, color: "#E65100" }}>⚠️ Fee Notice:</span> Stripe charges ~2.9% + $0.30. This fee <strong>cannot</strong> be deducted from your zakat. You must absorb it as a separate cost. Consider paying the organization directly to avoid fees.
-                      </div>
-                      {[["card", "💳", "Credit / Debit Card", "Visa, Mastercard, Amex"], ["ach", "🏦", "Bank Transfer (ACH)", "Direct from your bank"]].map(([id, icon, title, sub]) => (
-                        <div key={id} onClick={() => setPayMethod(id)} style={{ padding: "12px 16px", borderRadius: 10, border: `2px solid ${payMethod === id ? "#635BFF" : "#e0e0e0"}`, background: payMethod === id ? "#F5F3FF" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
-                          <span style={{ fontSize: 22 }}>{icon}</span>
-                          <div><p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>{title}</p><p style={{ margin: 0, fontSize: 11, color: "#999" }}>{sub}</p></div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 8 }}>Payment Method</label>
+                  {/* Fee warning */}
+                  <div style={{ padding: "10px 14px", borderRadius: 8, background: "#FFF8E1", border: "1px solid #FFB74D", fontSize: 12, color: "#5D4037", lineHeight: 1.5, marginBottom: 10 }}>
+                    <span style={{ fontWeight: 700, color: "#E65100" }}>⚠️ Fee Notice:</span> Online payment processors charge fees. Per Islamic ruling, zakat must reach recipients in full — <strong>you must absorb any processing fee</strong> as a separate voluntary cost.
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 280, overflowY: "auto" }}>
+                    {[
+                      ["card", "💳", "Credit / Debit Card (Stripe)", "Visa, Mastercard, Amex", "~2.9% + $0.30", "#635BFF"],
+                      ["paypal", "🅿️", "PayPal", "Pay with your PayPal account", "~2.9% + $0.30", "#003087"],
+                      ["apple_pay", "🍎", "Apple Pay", "Quick pay with Apple Pay", "~2.9% + $0.30", "#333"],
+                      ["google_pay", "▶️", "Google Pay", "Quick pay with Google Pay", "~2.9% + $0.30", "#4285F4"],
+                      ["venmo", "✌️", "Venmo", "Send via Venmo (US only)", "~1.9% + $0.10", "#008CFF"],
+                      ["zelle", "⚡", "Zelle", "Bank-to-bank transfer (US only)", "Free", "#6D1ED4"],
+                      ["cashapp", "💲", "Cash App", "Send via Cash App", "Free (debit) / 3% (credit)", "#00D632"],
+                      ["ach", "🏦", "Bank Transfer (ACH)", "Direct from your US bank", "~0.8% (max $5)", "#1565C0"],
+                      ["wire", "🌐", "International Wire Transfer", "SWIFT wire from any bank worldwide", "Varies by bank ($15-50)", "#0D47A1"],
+                      ["crypto", "₿", "Cryptocurrency", "Bitcoin, Ethereum, USDT, USDC", "Network fees only (~$0.50-5)", "#F7931A"],
+                      ["direct", "✅", "I Already Paid Directly", "Record a payment you made on the org's website", "No fees", "#2E7D32"],
+                    ].map(([id, icon, title, sub, fee, color]) => (
+                      <div key={id} onClick={() => setPayMethod(id)} style={{ padding: "10px 14px", borderRadius: 10, border: `2px solid ${payMethod === id ? color : "#e0e0e0"}`, background: payMethod === id ? `${color}08` : "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 12, transition: "all 0.15s" }}>
+                        <span style={{ fontSize: 20, width: 28, textAlign: "center", flexShrink: 0 }}>{icon}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ margin: 0, fontWeight: 600, fontSize: 13, color: "#333" }}>{title}</p>
+                          <p style={{ margin: 0, fontSize: 11, color: "#999" }}>{sub}</p>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div style={{ padding: "12px 16px", borderRadius: 10, border: "2px solid #1565C0", background: "#E3F2FD" }}>
-                      <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>🏦 International Wire Transfer</p>
-                      <p style={{ margin: "2px 0 0", fontSize: 11, color: "#666" }}>We'll show you the bank details to send from your bank</p>
-                    </div>
-                  )}
+                        <span style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, background: fee === "Free" || fee === "No fees" ? "#E8F5E9" : "#FFF3E0", color: fee === "Free" || fee === "No fees" ? "#2E7D32" : "#E65100", fontWeight: 700, whiteSpace: "nowrap", flexShrink: 0 }}>{fee}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div style={{ padding: "16px 24px", borderTop: "1px solid #f0f0f0", display: "flex", gap: 10, justifyContent: "flex-end" }}>
                   <button onClick={() => setShowPayModal(false)} style={{ padding: "10px 20px", borderRadius: 10, border: "1px solid #e0e0e0", background: "#fff", fontSize: 14, cursor: "pointer" }}>Cancel</button>
-                  <button onClick={() => setPayStep(1)} style={selectedOrg?.method === "stripe" ? S.stripeBtn : S.greenBtn}>
-                    {selectedOrg?.method === "stripe" ? "Continue to Checkout →" : "View Wire Details →"}
+                  <button onClick={() => { if (payMethod === "direct") { setPayStep(2); } else { setPayStep(1); } }} style={S.greenBtn}>
+                    {payMethod === "direct" ? "Record Payment →" : "Continue →"}
                   </button>
                 </div>
               </div>
             )}
 
-            {payStep === 1 && selectedOrg?.method === "stripe" && (
+            {payStep === 1 && (
               <div>
-                <div style={{ padding: "20px 24px", background: "linear-gradient(135deg, #635BFF, #7C3AED)", color: "#fff" }}>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Secure Checkout</h3>
+                {/* Dynamic header based on payment method */}
+                <div style={{ padding: "20px 24px", background: payMethod === "card" ? "linear-gradient(135deg, #635BFF, #7C3AED)" : payMethod === "paypal" ? "linear-gradient(135deg, #003087, #009CDE)" : payMethod === "apple_pay" ? "linear-gradient(135deg, #333, #555)" : payMethod === "google_pay" ? "linear-gradient(135deg, #4285F4, #34A853)" : payMethod === "venmo" ? "linear-gradient(135deg, #008CFF, #3396FF)" : payMethod === "zelle" ? "linear-gradient(135deg, #6D1ED4, #8B5CF6)" : payMethod === "cashapp" ? "linear-gradient(135deg, #00D632, #00C244)" : payMethod === "ach" ? "linear-gradient(135deg, #1565C0, #1976D2)" : payMethod === "wire" ? "linear-gradient(135deg, #0D47A1, #1565C0)" : payMethod === "crypto" ? "linear-gradient(135deg, #F7931A, #FF9500)" : "linear-gradient(135deg, #1B5E20, #2E7D32)", color: "#fff" }}>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>
+                    {payMethod === "card" ? "Stripe Checkout" : payMethod === "paypal" ? "PayPal Payment" : payMethod === "apple_pay" ? "Apple Pay" : payMethod === "google_pay" ? "Google Pay" : payMethod === "venmo" ? "Venmo Payment" : payMethod === "zelle" ? "Zelle Transfer" : payMethod === "cashapp" ? "Cash App Payment" : payMethod === "ach" ? "Bank Transfer (ACH)" : payMethod === "wire" ? "Wire Transfer Details" : payMethod === "crypto" ? "Cryptocurrency Payment" : "Payment"}
+                  </h3>
                   <p style={{ margin: "4px 0 0", fontSize: 24, fontWeight: 800 }}>${payAmount}</p>
-                  <p style={{ margin: "2px 0 0", fontSize: 12, opacity: 0.8 }}>to {selectedOrg.name}</p>
+                  <p style={{ margin: "2px 0 0", fontSize: 12, opacity: 0.8 }}>to {selectedOrg?.name}</p>
                 </div>
                 <div style={{ padding: "20px 24px" }}>
-                  <div style={{ marginBottom: 14 }}>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: "#888" }}>Card Number</label>
-                    <input placeholder="4242 4242 4242 4242" style={{ ...S.input, marginTop: 4 }} />
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
-                    <div><label style={{ fontSize: 12, fontWeight: 600, color: "#888" }}>Expiry</label><input placeholder="MM / YY" style={{ ...S.input, marginTop: 4 }} /></div>
-                    <div><label style={{ fontSize: 12, fontWeight: 600, color: "#888" }}>CVC</label><input placeholder="123" style={{ ...S.input, marginTop: 4 }} /></div>
-                  </div>
-                  <button onClick={() => setPayStep(2)} style={{ ...S.stripeBtn, width: "100%", padding: "14px", fontSize: 16 }}>Pay ${payAmount}</button>
-                  <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 11, color: "#999" }}>🔒 Secured by <span style={{ color: "#635BFF", fontWeight: 700 }}>Stripe</span></p>
-                </div>
-              </div>
-            )}
-
-            {payStep === 1 && selectedOrg?.method === "wire" && (
-              <div>
-                <div style={{ padding: "20px 24px", background: "linear-gradient(135deg, #1565C0, #1976D2)", color: "#fff" }}>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Wire Transfer Details</h3>
-                  <p style={{ margin: "4px 0 0", fontSize: 12, opacity: 0.8 }}>{selectedOrg.flag} {selectedOrg.name}</p>
-                </div>
-                <div style={{ padding: "20px 24px" }}>
-                  {[["Bank", "Bank Name"], ["Account Name", selectedOrg.name], ["IBAN", "XXXX-XXXX-XXXX-XXXX"], ["SWIFT/BIC", "XXXXXXXXX"], ["Currency", "USD"], ["Reference", "Zakat Donation — Zakatukum"]].map(([k, v], i) => (
-                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f5f5f5" }}>
-                      <span style={{ fontSize: 13, color: "#888" }}>{k}</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, fontFamily: "monospace" }}>{v}</span>
+                  {/* Card (Stripe) */}
+                  {payMethod === "card" && (<>
+                    <div style={{ marginBottom: 14 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: "#888" }}>Card Number</label>
+                      <input placeholder="4242 4242 4242 4242" style={{ ...S.input, marginTop: 4 }} />
                     </div>
-                  ))}
-                  <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-                    <button style={{ ...S.greenBtn, flex: 1, textAlign: "center" }}>📋 Copy All Details</button>
-                    <button onClick={() => setPayStep(2)} style={{ ...S.greenBtn, flex: 1, textAlign: "center", background: "linear-gradient(135deg, #1565C0, #1976D2)" }}>✓ Mark as Sent</button>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+                      <div><label style={{ fontSize: 12, fontWeight: 600, color: "#888" }}>Expiry</label><input placeholder="MM / YY" style={{ ...S.input, marginTop: 4 }} /></div>
+                      <div><label style={{ fontSize: 12, fontWeight: 600, color: "#888" }}>CVC</label><input placeholder="123" style={{ ...S.input, marginTop: 4 }} /></div>
+                    </div>
+                    <p style={{ margin: "0 0 12px", fontSize: 11, color: "#E65100", background: "#FFF8E1", padding: "8px 12px", borderRadius: 6 }}>⚠️ Processing fee (~2.9% + $0.30) will be added. This is not part of your zakat.</p>
+                  </>)}
+
+                  {/* PayPal */}
+                  {payMethod === "paypal" && (
+                    <div style={{ textAlign: "center", padding: "20px 0" }}>
+                      <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#FFF4E5", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 28 }}>🅿️</div>
+                      <p style={{ margin: "0 0 8px", fontSize: 14, fontWeight: 600 }}>You will be redirected to PayPal</p>
+                      <p style={{ margin: "0 0 4px", fontSize: 12, color: "#888" }}>Log in and confirm your payment of <strong>${payAmount}</strong></p>
+                      <p style={{ margin: "12px 0 0", fontSize: 11, color: "#E65100", background: "#FFF8E1", padding: "8px 12px", borderRadius: 6 }}>⚠️ PayPal fee (~2.9% + $0.30) will be charged. This is not part of your zakat.</p>
+                    </div>
+                  )}
+
+                  {/* Apple Pay */}
+                  {payMethod === "apple_pay" && (
+                    <div style={{ textAlign: "center", padding: "20px 0" }}>
+                      <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 28 }}>🍎</div>
+                      <p style={{ margin: "0 0 8px", fontSize: 14, fontWeight: 600 }}>Confirm with Apple Pay</p>
+                      <p style={{ margin: "0 0 4px", fontSize: 12, color: "#888" }}>Double-click the side button to pay <strong>${payAmount}</strong></p>
+                      <p style={{ margin: "12px 0 0", fontSize: 11, color: "#E65100", background: "#FFF8E1", padding: "8px 12px", borderRadius: 6 }}>⚠️ Standard processing fee (~2.9% + $0.30) applies. This is not part of your zakat.</p>
+                    </div>
+                  )}
+
+                  {/* Google Pay */}
+                  {payMethod === "google_pay" && (
+                    <div style={{ textAlign: "center", padding: "20px 0" }}>
+                      <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#E8F0FE", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 28 }}>▶️</div>
+                      <p style={{ margin: "0 0 8px", fontSize: 14, fontWeight: 600 }}>Confirm with Google Pay</p>
+                      <p style={{ margin: "0 0 4px", fontSize: 12, color: "#888" }}>Choose your payment method and confirm <strong>${payAmount}</strong></p>
+                      <p style={{ margin: "12px 0 0", fontSize: 11, color: "#E65100", background: "#FFF8E1", padding: "8px 12px", borderRadius: 6 }}>⚠️ Standard processing fee (~2.9% + $0.30) applies. This is not part of your zakat.</p>
+                    </div>
+                  )}
+
+                  {/* Venmo */}
+                  {payMethod === "venmo" && (
+                    <div style={{ textAlign: "center", padding: "20px 0" }}>
+                      <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#E3F2FD", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 28 }}>✌️</div>
+                      <p style={{ margin: "0 0 8px", fontSize: 14, fontWeight: 600 }}>Send via Venmo</p>
+                      <p style={{ margin: "0 0 4px", fontSize: 12, color: "#888" }}>You will be redirected to Venmo to send <strong>${payAmount}</strong></p>
+                      <p style={{ margin: "0", fontSize: 12, color: "#888" }}>Organization Venmo: <strong>@{selectedOrg?.name?.replace(/\s+/g, "")}</strong></p>
+                      <p style={{ margin: "12px 0 0", fontSize: 11, color: "#E65100", background: "#FFF8E1", padding: "8px 12px", borderRadius: 6 }}>⚠️ Venmo fee (~1.9% + $0.10) applies for credit cards. Debit/balance is free.</p>
+                    </div>
+                  )}
+
+                  {/* Zelle */}
+                  {payMethod === "zelle" && (
+                    <div>
+                      <div style={{ textAlign: "center", marginBottom: 16 }}>
+                        <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#EDE7F6", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 28 }}>⚡</div>
+                        <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 600 }}>Send via Zelle</p>
+                      </div>
+                      {[["Recipient", selectedOrg?.name], ["Zelle Email/Phone", `zakat@${selectedOrg?.name?.toLowerCase().replace(/\s+/g, "")}.org`], ["Amount", `$${payAmount}`], ["Memo", "Zakat Donation"]].map(([k, v], i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f5f5f5" }}>
+                          <span style={{ fontSize: 13, color: "#888" }}>{k}</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, fontFamily: "monospace" }}>{v}</span>
+                        </div>
+                      ))}
+                      <div style={{ margin: "14px 0 0", padding: "10px 14px", borderRadius: 8, background: "#E8F5E9", border: "1px solid #A5D6A7", fontSize: 12, color: "#1B5E20", fontWeight: 600, textAlign: "center" }}>
+                        ✅ Zelle has no processing fees — 100% of your zakat reaches the recipient
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cash App */}
+                  {payMethod === "cashapp" && (
+                    <div style={{ textAlign: "center", padding: "20px 0" }}>
+                      <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#E8F5E9", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 28 }}>💲</div>
+                      <p style={{ margin: "0 0 8px", fontSize: 14, fontWeight: 600 }}>Send via Cash App</p>
+                      <p style={{ margin: "0 0 4px", fontSize: 12, color: "#888" }}>Cash Tag: <strong style={{ fontFamily: "monospace" }}>${ selectedOrg?.name?.replace(/\s+/g, "")}</strong></p>
+                      <p style={{ margin: "0 0 4px", fontSize: 12, color: "#888" }}>Amount: <strong>${payAmount}</strong></p>
+                      <p style={{ margin: "12px 0 0", fontSize: 11, color: "#5D4037", background: "#FFF8E1", padding: "8px 12px", borderRadius: 6 }}>Free from debit card or balance. Credit card payments incur a 3% fee.</p>
+                    </div>
+                  )}
+
+                  {/* ACH Bank Transfer */}
+                  {payMethod === "ach" && (
+                    <div>
+                      <div style={{ textAlign: "center", marginBottom: 16 }}>
+                        <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#E3F2FD", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 28 }}>🏦</div>
+                        <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 600 }}>ACH Bank Transfer</p>
+                      </div>
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#888" }}>Routing Number</label>
+                        <input placeholder="110000000" style={{ ...S.input, marginTop: 4 }} />
+                      </div>
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#888" }}>Account Number</label>
+                        <input placeholder="000123456789" style={{ ...S.input, marginTop: 4 }} />
+                      </div>
+                      <p style={{ margin: "0 0 12px", fontSize: 11, color: "#E65100", background: "#FFF8E1", padding: "8px 12px", borderRadius: 6 }}>⚠️ ACH fee (~0.8%, max $5) applies. This is not part of your zakat.</p>
+                    </div>
+                  )}
+
+                  {/* Wire Transfer */}
+                  {payMethod === "wire" && (
+                    <div>
+                      {[["Bank", "Bank Name"], ["Account Name", selectedOrg?.name], ["IBAN", "XXXX-XXXX-XXXX-XXXX"], ["SWIFT/BIC", "XXXXXXXXX"], ["Currency", "USD"], ["Reference", "Zakat Donation"]].map(([k, v], i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f5f5f5" }}>
+                          <span style={{ fontSize: 13, color: "#888" }}>{k}</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, fontFamily: "monospace" }}>{v}</span>
+                        </div>
+                      ))}
+                      <p style={{ margin: "12px 0 0", fontSize: 11, color: "#5D4037", background: "#FFF8E1", padding: "8px 12px", borderRadius: 6 }}>Wire transfer fees ($15-50) vary by bank and are charged by your bank, not the recipient.</p>
+                    </div>
+                  )}
+
+                  {/* Cryptocurrency */}
+                  {payMethod === "crypto" && (
+                    <div>
+                      <div style={{ textAlign: "center", marginBottom: 16 }}>
+                        <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#FFF8E1", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 28 }}>₿</div>
+                        <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 600 }}>Send Cryptocurrency</p>
+                      </div>
+                      {[["Bitcoin (BTC)", "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"], ["Ethereum (ETH)", "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"], ["USDT (TRC-20)", "TN2Y4xYkrZ5rPNuBamy4DfT8q6DLPnma6F"], ["USDC (ERC-20)", "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"]].map(([k, v], i) => (
+                        <div key={i} style={{ padding: "8px 0", borderBottom: "1px solid #f5f5f5" }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: "#333", display: "block", marginBottom: 2 }}>{k}</span>
+                          <span style={{ fontSize: 11, color: "#888", fontFamily: "monospace", wordBreak: "break-all" }}>{v}</span>
+                        </div>
+                      ))}
+                      <div style={{ margin: "14px 0 0", padding: "10px 14px", borderRadius: 8, background: "#E8F5E9", border: "1px solid #A5D6A7", fontSize: 12, color: "#1B5E20", fontWeight: 600, textAlign: "center" }}>
+                        ✅ Only minimal network fees — nearly 100% reaches the recipient
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Confirm button */}
+                  <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
+                    <button onClick={() => setPayStep(0)} style={{ flex: 1, padding: "12px", borderRadius: 10, border: "1px solid #e0e0e0", background: "#fff", fontSize: 14, cursor: "pointer" }}>← Back</button>
+                    <button onClick={() => setPayStep(2)} style={{ ...S.greenBtn, flex: 2, textAlign: "center", padding: "12px", fontSize: 15 }}>
+                      {["zelle", "wire", "crypto", "cashapp", "venmo"].includes(payMethod) ? "✓ Mark as Sent" : `Pay $${payAmount}`}
+                    </button>
                   </div>
-                  <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 11, color: "#999" }}>Typical delivery: 2-5 business days</p>
+                  {["card", "paypal", "apple_pay", "google_pay"].includes(payMethod) && (
+                    <p style={{ margin: "10px 0 0", textAlign: "center", fontSize: 11, color: "#999" }}>🔒 Secured & encrypted</p>
+                  )}
                 </div>
               </div>
             )}
@@ -2200,21 +2325,30 @@ export default function ZakatukumPreview() {
                 <h3 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 800, color: "#1B5E20" }}>Zakat Payment Recorded!</h3>
                 <p style={{ margin: "0 0 20px", fontSize: 13, color: "#888" }}>May Allah accept your zakat — تقبل الله منكم</p>
                 <div style={{ background: "#f8f9fa", borderRadius: 12, padding: "16px 20px", textAlign: "left", marginBottom: 16 }}>
-                  {[["Amount", `$${payAmount}`], ["Recipient", selectedOrg?.name], ["Method", payStep === 2 && !payMethod ? "Paid Directly (No Fees)" : selectedOrg?.method === "stripe" ? "Stripe (Fees Apply)" : "Wire Transfer"], ["Confirmation", `ZAK-${Date.now().toString(36).toUpperCase()}`], ["Date", new Date().toLocaleDateString()]].map(([k, v], i) => (
+                  {[
+                    ["Amount", `$${payAmount}`],
+                    ["Recipient", selectedOrg?.name],
+                    ["Method", payMethod === "card" ? "Credit/Debit Card (Stripe)" : payMethod === "paypal" ? "PayPal" : payMethod === "apple_pay" ? "Apple Pay" : payMethod === "google_pay" ? "Google Pay" : payMethod === "venmo" ? "Venmo" : payMethod === "zelle" ? "Zelle" : payMethod === "cashapp" ? "Cash App" : payMethod === "ach" ? "Bank Transfer (ACH)" : payMethod === "wire" ? "Wire Transfer" : payMethod === "crypto" ? "Cryptocurrency" : payMethod === "direct" || !payMethod ? "Paid Directly (No Fees)" : "Other"],
+                    ["Confirmation", `ZAK-${Date.now().toString(36).toUpperCase()}`],
+                    ["Date", new Date().toLocaleDateString()]
+                  ].map(([k, v], i) => (
                     <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: i < 4 ? "1px solid #e8e8e8" : "none", fontSize: 13 }}>
                       <span style={{ color: "#888" }}>{k}</span><span style={{ fontWeight: 600 }}>{v}</span>
                     </div>
                   ))}
                 </div>
-                {/* Show green badge for direct payment */}
-                {!payMethod && (
+                {/* Fee status badge */}
+                {(!payMethod || payMethod === "direct" || payMethod === "zelle") ? (
                   <div style={{ padding: "10px 14px", marginBottom: 16, borderRadius: 8, background: "#E8F5E9", border: "1px solid #A5D6A7", fontSize: 12, color: "#1B5E20", fontWeight: 600 }}>
-                    ✓ No processing fees — 100% of your zakat reached the recipient
+                    ✅ No processing fees — 100% of your zakat reached the recipient
                   </div>
-                )}
-                {payMethod && selectedOrg?.method === "stripe" && (
+                ) : ["crypto", "cashapp"].includes(payMethod) ? (
+                  <div style={{ padding: "10px 14px", marginBottom: 16, borderRadius: 8, background: "#E8F5E9", border: "1px solid #A5D6A7", fontSize: 12, color: "#1B5E20", fontWeight: 600 }}>
+                    ✅ Minimal or no fees — nearly all of your zakat reached the recipient
+                  </div>
+                ) : (
                   <div style={{ padding: "10px 14px", marginBottom: 16, borderRadius: 8, background: "#FFF8E1", border: "1px solid #FFB74D", fontSize: 12, color: "#5D4037" }}>
-                    ⚠️ Stripe processing fee (~2.9% + $0.30) was charged separately. This fee is <strong>not</strong> part of your zakat obligation.
+                    ⚠️ Processing fees were charged separately by the payment provider. These fees are <strong>not</strong> part of your zakat obligation — your full zakat amount reached the recipient.
                   </div>
                 )}
                 <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
