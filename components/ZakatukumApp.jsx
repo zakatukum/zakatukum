@@ -564,10 +564,11 @@ export default function ZakatukumPreview() {
   useEffect(() => {
     if (!supabase) { setAuthChecking(false); return; }
 
-    // Check if this is a password reset callback
-    if (typeof window !== "undefined" && window.location.search.includes("reset=true")) {
-      setAuthMode("update-password");
-    }
+    // Track if this is a password reset flow (Supabase uses hash fragment: #type=recovery)
+    const isResetFlow = typeof window !== "undefined" && (
+      window.location.hash.includes("type=recovery") ||
+      window.location.search.includes("type=recovery")
+    );
 
     // Check existing session
     supabase.auth.getSession().then(({ data: { session: s } }) => {
@@ -576,28 +577,48 @@ export default function ZakatukumPreview() {
         setUserId(s.user.id);
         setUserEmail(s.user.email);
         setUserName(s.user.user_metadata?.name || s.user.email?.split("@")[0] || "User");
-        // Load profile preferences
-        supabase.from("profiles").select("*").eq("id", s.user.id).single().then(({ data: profile }) => {
-          if (profile) {
-            if (profile.country) setCountry(profile.country);
-            if (profile.currency) setCurrency(profile.currency);
-            if (profile.madhab) setMadhab(profile.madhab);
-            if (profile.lang) setLang(profile.lang);
-          }
-        });
-        setIsLoggedIn(true);
+        // If this is a reset flow, don't log in — show the password update form
+        if (isResetFlow) {
+          setAuthMode("update-password");
+        } else {
+          // Load profile preferences
+          supabase.from("profiles").select("*").eq("id", s.user.id).single().then(({ data: profile }) => {
+            if (profile) {
+              if (profile.country) setCountry(profile.country);
+              if (profile.currency) setCurrency(profile.currency);
+              if (profile.madhab) setMadhab(profile.madhab);
+              if (profile.lang) setLang(profile.lang);
+            }
+          });
+          setIsLoggedIn(true);
+        }
       }
       setAuthChecking(false);
     });
 
     // Listen for auth changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+      // PASSWORD_RECOVERY event: show update password form, don't log in
+      if (event === "PASSWORD_RECOVERY") {
+        setSession(s);
+        setUserId(s?.user?.id || null);
+        setAuthMode("update-password");
+        setIsLoggedIn(false);
+        // Clean up the URL
+        if (typeof window !== "undefined") {
+          window.history.replaceState({}, "", window.location.pathname);
+        }
+        return;
+      }
       if (s?.user) {
         setSession(s);
         setUserId(s.user.id);
         setUserEmail(s.user.email);
         setUserName(s.user.user_metadata?.name || s.user.email?.split("@")[0] || "User");
-        setIsLoggedIn(true);
+        // Don't auto-login if in password update mode
+        if (authMode !== "update-password") {
+          setIsLoggedIn(true);
+        }
       } else {
         setSession(null);
         setUserId(null);
@@ -725,13 +746,18 @@ export default function ZakatukumPreview() {
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-      setAuthSuccess("Password updated successfully!");
-      setTimeout(() => {
+      setAuthSuccess("Password updated successfully! Redirecting to login...");
+      // Sign out the recovery session so user can log in fresh with new password
+      setTimeout(async () => {
+        await supabase.auth.signOut();
+        setSession(null);
+        setUserId(null);
+        setIsLoggedIn(false);
         setAuthMode("login");
         setNewPassword("");
         setConfirmPassword("");
         setAuthSuccess("");
-      }, 1500);
+      }, 2000);
     } catch (err) {
       setAuthError(err.message || "Failed to update password");
     }
