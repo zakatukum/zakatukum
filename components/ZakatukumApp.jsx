@@ -696,74 +696,90 @@ export default function ZakatukumPreview() {
         const loaded = {};
         data.forEach(row => {
           const key = `${row.greg_year}-${row.hijri_year}`;
-          loaded[key] = {
-            goldPrice: 0,
-            cash: Number(row.cash) || 0,
-            inv: 0,
-            gold: Number(row.gold_grams) || 0,
-            paid: 0,
-            due: Number(row.total_zakat) || 0,
-            goldItems: [],
-            investments: row.investments || [],
-            payments: [],
-            connectedAccounts: [],
-            manualEntries: {
-              cashHome: String(Number(row.cash) || ""),
-              goldItems: [],
-              debtsOwed: [{ person: "", amount: String(Number(row.debts_owed) || ""), expectedDate: "" }],
-              businessInventory: String(Number(row.business_inventory) || ""),
-              otherAssets: [{ description: "", value: "" }],
-            },
-            livestock: row.livestock || { camels: 0, cattle: 0, sheep: 0 },
-            agriculture: row.agriculture || { cropType: "", weight: 0, unit: "kg", irrigated: true, marketValue: 0 },
-            mining: { minerals: Number(row.mining_value) || 0, rikaz: 0 },
-            rental: row.rental || { monthlyIncome: 0, expenses: 0, months: 12 },
-            _dbId: row.id, // track database row id
-          };
+          // v2 format: full year data stored in investments JSONB with __v2 flag
+          if (row.investments && row.investments.__v2) {
+            const fullData = { ...row.investments };
+            delete fullData.__v2;
+            loaded[key] = { ...emptyYearData, ...fullData, _dbId: row.id };
+          } else {
+            // Legacy v1 format: reconstruct from individual columns
+            loaded[key] = {
+              ...emptyYearData,
+              goldPrice: Number(row.gold_value) || 0,
+              cash: Number(row.cash) || 0,
+              gold: Number(row.gold_grams) || 0,
+              due: Number(row.total_zakat) || 0,
+              investments: (row.investments && !row.investments.__v2) ? row.investments : [],
+              manualEntries: {
+                ...emptyYearData.manualEntries,
+                cashHome: String(Number(row.cash) || ""),
+                businessInventory: String(Number(row.business_inventory) || ""),
+                debtsOwed: [{ person: "", amount: String(Number(row.debts_owed) || ""), expectedDate: "" }],
+              },
+              livestock: row.livestock || emptyYearData.livestock,
+              agriculture: row.agriculture || emptyYearData.agriculture,
+              mining: { minerals: Number(row.mining_value) || 0, rikaz: 0 },
+              rental: row.rental || emptyYearData.rental,
+              _dbId: row.id,
+            };
+          }
         });
         setYearlyData(prev => ({ ...prev, ...loaded }));
+        addToast(`Loaded ${data.length} year(s) of zakat data`, "success");
       }
     };
     loadData();
   }, [isLoggedIn, session]);
 
   // ─── Auto-save zakat data to Supabase (debounced) ───
-  const saveToSupabase = useCallback(async (yearKey, data) => {
+  // v2: stores full year data as JSONB in investments column
+  const saveToSupabase = useCallback(async (yearKey, yearData) => {
     if (!session || !userId || !supabase) return;
     const [greg, hijri] = yearKey.split("-").map(Number);
     if (!greg || !hijri) return;
+
+    // Strip internal fields before saving
+    const { _dbId, ...cleanData } = yearData;
+
     const payload = {
       hijri_year: hijri,
       greg_year: greg,
-      cash: Number(data.cash) || 0,
-      savings: Number(data.manualEntries?.cashHome) || 0,
-      gold_grams: Number(data.gold) || 0,
-      gold_value: Number(data.goldItems?.reduce?.((s, i) => s + (Number(i.value) || 0), 0)) || 0,
-      investments: data.investments || [],
-      business_inventory: Number(data.manualEntries?.businessInventory) || 0,
-      rental: data.rental || {},
-      agriculture: data.agriculture || {},
-      livestock: data.livestock || {},
-      mining_value: Number(data.mining?.minerals) || 0,
-      debts_owed: Number(data.manualEntries?.debtsOwed?.[0]?.amount) || 0,
-      total_zakat: Number(data.due) || 0,
-      total_assets: Number(data.cash) + Number(data.inv) + Number(data.gold) || 0,
+      // v2: store full year data in investments JSONB column
+      investments: { __v2: true, ...cleanData },
+      // Also keep legacy columns populated for backward compat / queries
+      cash: Number(yearData.cash) || 0,
+      savings: Number(yearData.manualEntries?.cashHome) || 0,
+      gold_grams: Number(yearData.gold) || 0,
+      gold_value: Number(yearData.goldPrice) || 0,
+      business_inventory: Number(yearData.manualEntries?.businessInventory) || 0,
+      rental: yearData.rental || {},
+      agriculture: yearData.agriculture || {},
+      livestock: yearData.livestock || {},
+      mining_value: Number(yearData.mining?.minerals) || 0,
+      debts_owed: Number(yearData.manualEntries?.debtsOwed?.[0]?.amount) || 0,
+      total_zakat: Number(yearData.due) || 0,
+      total_assets: (Number(yearData.cash) || 0) + (Number(yearData.inv) || 0) + (Number(yearData.gold) || 0),
     };
-    await supabase.from("zakat_years").upsert(
+
+    const { error } = await supabase.from("zakat_years").upsert(
       { ...payload, user_id: userId },
       { onConflict: "user_id,hijri_year" }
     );
+    if (error) {
+      console.error("Save error:", error.message);
+    }
   }, [session, userId]);
 
-  // Save whenever yearlyData changes (with debounce)
+  // Save ALL years whenever yearlyData changes (debounced)
   useEffect(() => {
     if (!isLoggedIn || !session) return;
     const timer = setTimeout(() => {
-      const data = yearlyData[selectedYear];
-      if (data) saveToSupabase(selectedYear, data);
+      Object.entries(yearlyData).forEach(([yearKey, data]) => {
+        saveToSupabase(yearKey, data);
+      });
     }, 2000); // 2 second debounce
     return () => clearTimeout(timer);
-  }, [yearlyData, selectedYear, isLoggedIn, session, saveToSupabase]);
+  }, [yearlyData, isLoggedIn, session, saveToSupabase]);
 
   // ─── Password reset handler ───
   const handlePasswordReset = async (e) => {
