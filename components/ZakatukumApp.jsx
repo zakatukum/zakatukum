@@ -581,6 +581,7 @@ export default function ZakatukumPreview() {
   const [showAddYearModal, setShowAddYearModal] = useState(false);
   const [newYearInput, setNewYearInput] = useState("");
   const [goldPriceLoading, setGoldPriceLoading] = useState(false);
+  const [reminders, setReminders] = useState({ reminder_30d: false, reminder_7d: true, reminder_due: true, reminder_monthly: false });
 
   // ─── Toast & Mobile UI State ───
   const [toasts, setToasts] = useState([]);
@@ -643,6 +644,7 @@ export default function ZakatukumPreview() {
               if (profile.currency) setCurrency(profile.currency);
               if (profile.madhab) setMadhab(profile.madhab);
               if (profile.lang) setLang(profile.lang);
+              if (profile.reminders) setReminders(profile.reminders);
             }
           });
           setIsLoggedIn(true);
@@ -2663,13 +2665,18 @@ export default function ZakatukumPreview() {
                     ["On zakat due date", "reminder_due"],
                     ["Monthly zakat progress summary", "reminder_monthly"],
                   ].map(([label, id]) => (
-                    <label key={id} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "#333", cursor: "pointer", padding: "8px 12px", borderRadius: 8, background: "#f8f9fa" }}>
-                      <input type="checkbox" defaultChecked={id === "reminder_7d" || id === "reminder_due"} style={{ width: 18, height: 18, accentColor: "#1B5E20" }} />
+                    <label key={id} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "#333", cursor: "pointer", padding: "8px 12px", borderRadius: 8, background: reminders[id] ? "#e8f5e9" : "#f8f9fa", border: reminders[id] ? "1px solid #A5D6A7" : "1px solid transparent" }}>
+                      <input type="checkbox" checked={reminders[id] || false} onChange={() => setReminders(prev => ({ ...prev, [id]: !prev[id] }))} style={{ width: 18, height: 18, accentColor: "#1B5E20" }} />
                       {label}
                     </label>
                   ))}
                 </div>
-                <button onClick={() => addToast("Reminder preferences saved!")} style={{ ...S.greenBtn, marginTop: 16, fontSize: 13, padding: "10px 20px" }}>Save Reminders</button>
+                <button onClick={async () => {
+                  if (!supabase || !userId) return;
+                  const { error } = await supabase.from("profiles").upsert({ id: userId, reminders, updated_at: new Date().toISOString() });
+                  if (error) { addToast("Failed to save: " + error.message, "error"); }
+                  else { addToast("Reminder preferences saved!", "success"); }
+                }} style={{ ...S.greenBtn, marginTop: 16, fontSize: 13, padding: "10px 20px" }}>Save Reminders</button>
               </SectionCard>
             </div>
           )}
