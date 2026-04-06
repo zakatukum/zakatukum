@@ -507,6 +507,7 @@ export default function ZakatukumPreview() {
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [authChecking, setAuthChecking] = useState(true); // true while checking session on mount
+  const [isAdmin, setIsAdmin] = useState(false);
   const [authSuccess, setAuthSuccess] = useState(""); // success message for reset flow
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
@@ -645,6 +646,7 @@ export default function ZakatukumPreview() {
               if (profile.madhab) setMadhab(profile.madhab);
               if (profile.lang) setLang(profile.lang);
               if (profile.reminders) setReminders(profile.reminders);
+              if (profile.is_admin) setIsAdmin(true);
             }
           });
           setIsLoggedIn(true);
@@ -1565,7 +1567,7 @@ export default function ZakatukumPreview() {
             { id: "rental", icon: "🏠", label: t("rental") },
             { id: "report", icon: "📄", label: t("report") },
             { id: "settings", icon: "⚙️", label: t("profile_settings") },
-          ].concat(userEmail === "usman.rr@gmail.com" ? [{ id: "admin", icon: "📈", label: t("admin_dashboard") }] : []).map(n => (
+          ].concat(isAdmin ? [{ id: "admin", icon: "📈", label: t("admin_dashboard") }] : []).map(n => (
             <button key={n.id} onClick={() => { setView(n.id); setShowUserMenu(false); }} style={S.navBtn(view === n.id)}>
               <span style={{ fontSize: 16 }}>{n.icon}</span> {n.label}
             </button>
@@ -2681,7 +2683,7 @@ export default function ZakatukumPreview() {
             </div>
           )}
 
-          {view === "admin" && userEmail === "usman.rr@gmail.com" && (
+          {view === "admin" && isAdmin && (
             <div>
               <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#1B5E20" }}>Admin Dashboard</h2>
               <p style={{ margin: "0 0 20px", fontSize: 13, color: "#999" }}>Application analytics and management</p>
