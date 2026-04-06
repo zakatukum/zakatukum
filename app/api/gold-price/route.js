@@ -1,44 +1,47 @@
 import { NextResponse } from "next/server";
 
-// Gold price API route — server-side proxy to free gold price APIs
-// Avoids CORS issues by fetching from Next.js API route
+const TROY_OZ_TO_GRAMS = 31.1035;
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const date = searchParams.get("date"); // optional: YYYY-MM-DD
+  const date = searchParams.get("date");
 
   try {
-    // For live/current price: use gold-api.com (free, no key, returns USD/oz)
-    // For historical date: use Polish National Bank (free, returns PLN/gram) + Frankfurter (PLN→USD)
-    if (!date || date === new Date().toISOString().split("T")[0]) {
-      const liveResult = await fetchLiveGoldPrice();
-      if (liveResult) return NextResponse.json(liveResult);
+    // Try live price first (works for current date or as fallback)
+    const liveResult = await fetchLiveGoldPrice();
+
+    // If a specific historical date was requested, try historical source
+    if (date) {
+      const histResult = await fetchHistoricalGoldPrice(date);
+      if (histResult) return NextResponse.json(histResult);
+      // If historical fails but live worked, return live with a note
+      if (liveResult) {
+        return NextResponse.json({
+          ...liveResult,
+          note: "Using current price (historical unavailable for " + date + ")",
+        });
+      }
     }
 
-    // Historical or live fallback: NBP + Frankfurter
-    const historicalResult = await fetchHistoricalGoldPrice(date);
-    if (historicalResult) return NextResponse.json(historicalResult);
+    if (liveResult) return NextResponse.json(liveResult);
 
-    // Last resort: try live from gold-api.com even for historical requests
-    const liveResult = await fetchLiveGoldPrice();
-    if (liveResult) return NextResponse.json({ ...liveResult, note: "Live price (historical unavailable)" });
-
-    return NextResponse.json({ error: "Could not fetch gold price from any source" }, { status: 502 });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch gold price", details: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Could not fetch gold price" }, { status: 502 });
+  } catch (err) {
+    return NextResponse.json({ error: "Server error: " + err.message }, { status: 500 });
   }
 }
 
-const TROY_OZ_TO_GRAMS = 31.1035;
-
-// Source 1: gold-api.com — free, no API key, returns live XAU/USD per troy oz
 async function fetchLiveGoldPrice() {
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
     const res = await fetch("https://api.gold-api.com/price/XAU", {
-      signal: AbortSignal.timeout(8000),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
     if (!res.ok) return null;
     const data = await res.json();
-    if (data.price) {
+    if (data && data.price) {
       return {
         pricePerGram: Math.round((data.price / TROY_OZ_TO_GRAMS) * 100) / 100,
         pricePerOz: data.price,
@@ -47,71 +50,100 @@ async function fetchLiveGoldPrice() {
       };
     }
     return null;
-  } catch {
+  } catch (e) {
+    console.error("fetchLiveGoldPrice error:", e.message);
     return null;
   }
 }
 
-// Source 2: Polish National Bank (NBP) for historical gold price per gram in PLN
-// + Frankfurter API for USD/PLN exchange rate → convert to USD/gram
-async function fetchHistoricalGoldPrice(date) {
+async function fetchHistoricalGoldPrice(targetDate) {
   try {
-    const targetDate = date || new Date().toISOString().split("T")[0];
+    const controller1 = new AbortController();
+    const timeout1 = setTimeout(() => controller1.abort(), 10000);
+    const controller2 = new AbortController();
+    const timeout2 = setTimeout(() => controller2.abort(), 10000);
 
-    // Fetch gold price in PLN/gram from NBP and USD/PLN rate in parallel
-    const [nbpRes, fxRes] = await Promise.all([
-      fetch(`https://api.nbp.pl/api/cenyzlota/${targetDate}?format=json`, {
-        signal: AbortSignal.timeout(8000),
-      }).catch(() => null),
-      fetch(`https://api.frankfurter.dev/v1/${targetDate}?base=USD&symbols=PLN`, {
-        signal: AbortSignal.timeout(8000),
-      }).catch(() => null),
-    ]);
+    // Try exact date from NBP
+    let nbpRes = null;
+    try {
+      nbpRes = await fetch(
+        "https://api.nbp.pl/api/cenyzlota/" + targetDate + "?format=json",
+        { signal: controller1.signal }
+      );
+    } catch (e) {
+      nbpRes = null;
+    }
+    clearTimeout(timeout1);
 
-    // If exact date fails (weekend/holiday), try a range to get closest date
     let goldPricePLN = null;
+
     if (nbpRes && nbpRes.ok) {
-      const nbpData = await nbpRes.json();
-      if (Array.isArray(nbpData) && nbpData[0] && nbpData[0].cena) {
-        goldPricePLN = nbpData[0].cena;
+      try {
+        const nbpData = await nbpRes.json();
+        if (Array.isArray(nbpData) && nbpData.length > 0 && nbpData[0].cena) {
+          goldPricePLN = nbpData[0].cena;
+        }
+      } catch (e) {
+        // JSON parse failed
       }
-    } else {
-      // Try fetching a range (last 5 business days before the date)
-      const d = new Date(targetDate);
-      const startDate = new Date(d);
-      startDate.setDate(d.getDate() - 7);
-      const startStr = startDate.toISOString().split("T")[0];
-      const rangeRes = await fetch(
-        `https://api.nbp.pl/api/cenyzlota/${startStr}/${targetDate}?format=json`,
-        { signal: AbortSignal.timeout(8000) }
-      ).catch(() => null);
-      if (rangeRes && rangeRes.ok) {
-        const rangeData = await rangeRes.json();
-        if (Array.isArray(rangeData) && rangeData.length > 0) {
-          goldPricePLN = rangeData[rangeData.length - 1].cena; // most recent
+    }
+
+    // If exact date failed (weekend/holiday), try range
+    if (!goldPricePLN) {
+      try {
+        const d = new Date(targetDate);
+        const startDate = new Date(d.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const startStr = startDate.toISOString().split("T")[0];
+        const controller3 = new AbortController();
+        const timeout3 = setTimeout(() => controller3.abort(), 10000);
+        const rangeRes = await fetch(
+          "https://api.nbp.pl/api/cenyzlota/" + startStr + "/" + targetDate + "?format=json",
+          { signal: controller3.signal }
+        );
+        clearTimeout(timeout3);
+        if (rangeRes && rangeRes.ok) {
+          const rangeData = await rangeRes.json();
+          if (Array.isArray(rangeData) && rangeData.length > 0) {
+            goldPricePLN = rangeData[rangeData.length - 1].cena;
+          }
+        }
+      } catch (e) {
+        // range fetch failed
+      }
+    }
+
+    // Get USD/PLN exchange rate
+    let plnPerUsd = null;
+    try {
+      const fxRes = await fetch(
+        "https://api.frankfurter.dev/v1/" + targetDate + "?base=USD&symbols=PLN",
+        { signal: controller2.signal }
+      );
+      clearTimeout(timeout2);
+      if (fxRes && fxRes.ok) {
+        const fxData = await fxRes.json();
+        if (fxData && fxData.rates && fxData.rates.PLN) {
+          plnPerUsd = fxData.rates.PLN;
         }
       }
+    } catch (e) {
+      // fx fetch failed
     }
-
-    let plnPerUsd = null;
-    if (fxRes && fxRes.ok) {
-      const fxData = await fxRes.json();
-      if (fxData.rates && fxData.rates.PLN) {
-        plnPerUsd = fxData.rates.PLN;
-      }
-    }
+    clearTimeout(timeout2);
 
     if (goldPricePLN && plnPerUsd) {
       const pricePerGram = Math.round((goldPricePLN / plnPerUsd) * 100) / 100;
       return {
-        pricePerGram,
+        pricePerGram: pricePerGram,
         pricePerOz: Math.round(pricePerGram * TROY_OZ_TO_GRAMS * 100) / 100,
         date: targetDate,
         source: "nbp.pl",
       };
     }
+
     return null;
-  } catch {
+  } catch (e) {
+    console.error("fetchHistoricalGoldPrice error:", e.message);
     return null;
   }
 }
