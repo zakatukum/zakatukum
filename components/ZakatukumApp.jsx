@@ -924,25 +924,49 @@ export default function ZakatukumPreview() {
     }));
   };
 
-  // Fetch gold price from our API route (server-side proxy to free gold APIs)
+  // Fetch gold price directly from free CORS-enabled APIs
+  const TROY_OZ_TO_GRAMS = 31.1035;
   const fetchGoldPrice = async (date) => {
     setGoldPriceLoading(true);
     try {
-      const params = date ? `?date=${date}` : "";
-      const res = await fetch(`/api/gold-price${params}`);
-      if (!res.ok) throw new Error("API returned " + res.status);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      if (data.pricePerGram) {
-        updateCurrentYear("goldPrice", data.pricePerGram);
-        updateCurrentYear("goldPriceSource", data.source);
-        if (date) updateCurrentYear("lockDate", date);
-        addToast(`Gold: $${data.pricePerGram}/g (${data.source})${date ? " for " + date : ""}`, "success");
-      } else {
-        throw new Error("No price data");
-      }
+      // Source 1: gold-api.com (free, no key, CORS enabled, live price)
+      try {
+        const res = await fetch("https://api.gold-api.com/price/XAU");
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.price) {
+            const pricePerGram = Math.round((data.price / TROY_OZ_TO_GRAMS) * 100) / 100;
+            updateCurrentYear("goldPrice", pricePerGram);
+            updateCurrentYear("goldPriceSource", "gold-api.com");
+            if (date) updateCurrentYear("lockDate", date);
+            addToast(`Gold: $${pricePerGram}/g${date ? " (locked " + date + ")" : " (live)"}`, "success");
+            setGoldPriceLoading(false);
+            return;
+          }
+        }
+      } catch (e) { /* try next source */ }
+
+      // Source 2: Swissquote (free, CORS, live XAU/USD)
+      try {
+        const res = await fetch("https://forex-data-feed.swissquote.com/public-quotes/bboquotes/instrument/XAU/USD");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data[0] && data[0].spreadProfilePrices) {
+            const bid = data[0].spreadProfilePrices[0].bid;
+            const pricePerGram = Math.round((bid / TROY_OZ_TO_GRAMS) * 100) / 100;
+            updateCurrentYear("goldPrice", pricePerGram);
+            updateCurrentYear("goldPriceSource", "swissquote.com");
+            if (date) updateCurrentYear("lockDate", date);
+            addToast(`Gold: $${pricePerGram}/g${date ? " (locked " + date + ")" : " (live)"}`, "success");
+            setGoldPriceLoading(false);
+            return;
+          }
+        }
+      } catch (e) { /* try next source */ }
+
+      throw new Error("All sources failed");
     } catch (e) {
-      addToast("Could not fetch gold price. Enter manually.", "error");
+      addToast("Could not fetch gold price. Please enter manually.", "error");
     } finally {
       setGoldPriceLoading(false);
     }
