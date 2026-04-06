@@ -534,6 +534,8 @@ export default function ZakatukumPreview() {
 
   const emptyYearData = {
     goldPrice: 0,
+    lockDate: "",
+    goldPriceSource: "",
     cash: 0,
     inv: 0,
     gold: 0,
@@ -578,6 +580,7 @@ export default function ZakatukumPreview() {
   const [retirementOptions, setRetirementOptions] = useState({});
   const [showAddYearModal, setShowAddYearModal] = useState(false);
   const [newYearInput, setNewYearInput] = useState("");
+  const [goldPriceLoading, setGoldPriceLoading] = useState(false);
 
   // ─── Toast & Mobile UI State ───
   const [toasts, setToasts] = useState([]);
@@ -919,6 +922,39 @@ export default function ZakatukumPreview() {
         [field]: value,
       }
     }));
+  };
+
+  // Fetch gold price from our API route (server-side proxy to free gold APIs)
+  const fetchGoldPrice = async (date) => {
+    setGoldPriceLoading(true);
+    try {
+      const params = date ? `?date=${date}` : "";
+      const res = await fetch(`/api/gold-price${params}`);
+      if (!res.ok) throw new Error("API returned " + res.status);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      if (data.pricePerGram) {
+        updateCurrentYear("goldPrice", data.pricePerGram);
+        updateCurrentYear("goldPriceSource", data.source);
+        if (date) updateCurrentYear("lockDate", date);
+        addToast(`Gold: $${data.pricePerGram}/g (${data.source})${date ? " for " + date : ""}`, "success");
+      } else {
+        throw new Error("No price data");
+      }
+    } catch (e) {
+      addToast("Could not fetch gold price. Enter manually.", "error");
+    } finally {
+      setGoldPriceLoading(false);
+    }
+  };
+
+  // Handler for lock date change — fetches gold price for that date
+  const handleLockDateChange = (e) => {
+    const date = e.target.value;
+    updateCurrentYear("lockDate", date);
+    if (date) {
+      fetchGoldPrice(date);
+    }
   };
 
   // Helper to update nested fields in manualEntries
@@ -1592,13 +1628,16 @@ export default function ZakatukumPreview() {
                   <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Gold Price ({currencyInfo.symbol}/gram)</label>
                   <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
                     <input value={currentYearData.goldPrice} onChange={e => updateCurrentYear("goldPrice", parseFloat(e.target.value) || 0)} style={{ ...S.input, ...S.numInput, flex: 1, fontSize: 20, fontWeight: 700, color: "#1B5E20", background: "#FFF8E1" }} />
-                    <button style={{ ...S.headerBtn, background: "#e8f5e9", color: "#2E7D32", border: "1px solid #C8E6C9" }}>⟳ Live</button>
+                    <button onClick={() => fetchGoldPrice()} disabled={goldPriceLoading} style={{ ...S.headerBtn, background: goldPriceLoading ? "#ccc" : "#e8f5e9", color: "#2E7D32", border: "1px solid #C8E6C9", cursor: goldPriceLoading ? "wait" : "pointer", minWidth: 60 }}>{goldPriceLoading ? "..." : "⟳ Live"}</button>
                   </div>
+                  {currentYearData.goldPriceSource && <p style={{ margin: "4px 0 0", fontSize: 10, color: "#999" }}>via {currentYearData.goldPriceSource}</p>}
                 </div>
                 <div style={{ ...S.card, padding: "14px 18px" }}>
                   <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Lock Date</label>
-                  <input type="date" style={{ ...S.input, marginTop: 6, fontSize: 15, fontWeight: 600 }} />
-                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "#2E7D32", fontWeight: 600 }}>{hijriToday}</p>
+                  <input type="date" value={currentYearData.lockDate || ""} onChange={handleLockDateChange} style={{ ...S.input, marginTop: 6, fontSize: 15, fontWeight: 600 }} />
+                  {goldPriceLoading && <p style={{ margin: "4px 0 0", fontSize: 11, color: "#E65100", fontWeight: 600 }}>Fetching gold price...</p>}
+                  {!goldPriceLoading && currentYearData.lockDate && <p style={{ margin: "4px 0 0", fontSize: 11, color: "#2E7D32", fontWeight: 600 }}>Locked: ${currentYearData.goldPrice}/g</p>}
+                  {!currentYearData.lockDate && <p style={{ margin: "4px 0 0", fontSize: 12, color: "#2E7D32", fontWeight: 600 }}>{hijriToday}</p>}
                 </div>
                 <div style={{ ...S.card, padding: "14px 18px", background: "linear-gradient(135deg, #1B5E20, #2E7D32)", color: "#fff" }}>
                   <label style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.7)", textTransform: "uppercase" }}>{t("zakat_due")}</label>
