@@ -16,7 +16,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "RESEND_API_KEY not configured" }, { status: 500 });
     }
 
-    const fromEmail = process.env.RESEND_FROM_EMAIL || "Zakatukum <onboarding@resend.dev>";
+    const fromEmail = process.env.RESEND_FROM_EMAIL || "Zakatukum <reminders@zakatukum.com>";
 
     // Build the HTML email body
     const html = buildReminderEmail({ type, userName, zakatSummary });
