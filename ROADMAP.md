@@ -1,7 +1,7 @@
 # Zakatukum (زكاتكم) — SaaS Roadmap
 
 **Last Updated:** April 6, 2026
-**Status:** MVP web app live on Vercel. Backend auth via Supabase. Scaling to mobile + data persistence.
+**Status:** MVP web app live on Vercel. Backend auth via Supabase. Landing page + feedback system live. Scaling to mobile.
 
 ---
 
@@ -71,8 +71,10 @@
 - [x] Toast notification system (success/error, 4s auto-dismiss)
 - [x] Customizable Report view (year filter + section toggles)
 - [x] Settings/Profile page
-- [x] Admin dashboard (conditional on admin email)
+- [x] Admin dashboard (conditional on is_admin flag in DB)
 - [x] Sidebar: current year display + Add Year button
+- [x] **Landing page** — public marketing page with hero, features, madhab support, languages/currencies, payment methods, Hijri tracking, CTA sections
+- [x] **Feedback system** — category selection (7 types), star rating, message form, user history view, admin view with all submissions
 
 ### Auth & Deployment
 - [x] Supabase Auth (email/password signup + login)
@@ -80,24 +82,32 @@
 - [x] Deployed to Vercel (auto-deploy from GitHub)
 - [x] GitHub repo: zakatukum/zakatukum
 
+### Design System
+- [x] **DESIGN.md** — full 9-section design system (awesome-design-md format) with green-tinted chromatic shadows, Inter typography hierarchy, component specs, responsive breakpoints
+
 ---
 
-## Phase 1: MVP Web — ~98% COMPLETE
+## Phase 1: MVP Web — 100% COMPLETE ✓
 
-### Recently Completed
+### Recently Completed (April 6, 2026)
 - [x] **Persist zakat data to Supabase** — v2 JSONB format, full yearData stored in `investments` column with backward compat
 - [x] **Auto gold price fetch** — client-side dual source (gold-api.com live + freegoldapi.com historical), auto-fetches on Lock Date selection
 - [x] **Email reminder backend** — Resend API integration with branded HTML templates (4 reminder types), domain verified for zakatukum.com
 - [x] **Resend DNS verification** — DKIM, MX, SPF records added to Cloudflare for zakatukum.com, domain fully verified
 - [x] **Vercel env vars** — RESEND_API_KEY and RESEND_FROM_EMAIL configured for production
-- [x] **Admin access** — database-driven `is_admin` flag (replaced hardcoded email)
+- [x] **Admin access** — database-driven `is_admin` boolean column in profiles table (replaced hardcoded email)
 - [x] **Removed hardcoded emails** — all personal emails removed from codebase
+- [x] **Fixed Vercel API routes** — removed `outputFileTracingRoot` from next.config.js that caused all API routes to 500
+- [x] **Set is_admin flag** — added `is_admin` column to profiles table, set true for admin user via Supabase SQL Editor
+- [x] **Landing page** — professional marketing page with Islamic geometric patterns, green-tinted shadows, section labels, CSS hover animations, fade-in effects, Noto Naskh Arabic for Arabic text
+- [x] **Feedback system** — `/api/feedback` route (POST/GET), `feedback` table in Supabase with RLS policies, 7 categories, star rating, user feedback history, admin feedback dashboard
+- [x] **DESIGN.md** — comprehensive design system based on awesome-design-md format (Stripe fintech pattern adapted for Islamic green branding)
 
-### Remaining
-- [ ] **Landing page** — public-facing marketing site for new users
-- [ ] **Unit/integration tests** — none exist yet
-- [ ] **Fix Vercel API routes** — all return 500 due to `outputFileTracingRoot` in next.config.js (workaround: client-side fetches)
-- [ ] **Set is_admin flag** — set `is_admin: true` in Supabase profiles table for admin user
+### Database Tables
+- `profiles` — id, email, name, country, currency, madhab, lang, is_admin, reminders, created_at, updated_at
+- `zakat_years` — id, user_id, hijri_year, investments (JSONB v2 data), created_at, updated_at
+- `zakat_payments` — id, user_id, hijri_year, amount, method, org, date, notes
+- `feedback` — id, user_id, user_email, category, rating, message, admin_response, status, created_at, updated_at
 
 ---
 
@@ -152,27 +162,18 @@
 
 ---
 
-## Phase 3: Backend + Data Persistence
+## Phase 3: Backend Enhancements
 
 **Timeline:** 2-3 weeks
 
-### Supabase Integration
-- [ ] Create zakat_years table (user_id, year_key, data JSONB)
-- [ ] Create payments table (user_id, year, amount, method, date, org)
-- [ ] Row Level Security (RLS) policies per user
-- [ ] Auto-save on data change (debounced)
-- [ ] Load user data on login
-- [ ] Real-time sync between web and mobile
-
 ### User Management
-- [ ] User profiles (name, email, timezone, preferred language)
 - [ ] Family accounts (manage multiple household members)
 - [ ] Data export and deletion (GDPR compliance)
 
-### Email Reminders (Backend)
-- [ ] Supabase Edge Function for scheduled emails
+### Email Reminders (Scheduled)
+- [ ] Supabase Edge Function or Vercel Cron for scheduled emails
 - [ ] Configurable reminder timing (Sha'ban, Ramadan, custom)
-- [ ] Email templates (SendGrid or Resend)
+- [ ] Unsubscribe handling
 
 ### Bank Connection (Optional)
 - [ ] Plaid Link integration (connect bank accounts)
@@ -239,6 +240,7 @@
 - [ ] Org admin dashboard
 - [ ] Tax receipt generation (US 501(c)(3) letters)
 - [ ] API for third-party integrations
+- [ ] Unit/integration tests
 
 ### Marketing
 - [ ] SEO (target: "zakat calculator", "nisab", "ramadan zakat")
@@ -265,7 +267,7 @@
 | Vercel (web hosting) | $0 (free tier) |
 | Supabase (auth + database) | $0-25 |
 | Expo EAS (build priority — optional) | $0-99 |
-| Email service (SendGrid/Resend) | $0-20 |
+| Email service (Resend) | $0-20 |
 | **Total Monthly** | **~$0-144** |
 
 ### Per-Transaction
@@ -281,9 +283,9 @@
 
 | Phase | Duration | Status |
 |-------|----------|--------|
-| **Phase 1:** MVP Web | Weeks 1-4 | ~98% done |
+| **Phase 1:** MVP Web | Weeks 1-4 | **100% COMPLETE** ✓ |
 | **Phase 2:** Mobile App (Expo) | Weeks 5-10 | Not started |
-| **Phase 3:** Backend + Data Persistence | Weeks 11-13 | Not started |
+| **Phase 3:** Backend Enhancements | Weeks 11-13 | Not started |
 | **Phase 4:** Payments (Live) | Weeks 14-15 | Not started |
 | **Phase 5:** Compliance & Security | Weeks 16-19 | Not started |
 | **Phase 6:** Growth & Monetization | Week 20+ | Not started |
@@ -294,13 +296,13 @@
 
 ## Immediate Next Steps
 
-1. [x] ~~Rotate GitHub PAT and Supabase DB password~~ (struck off — not doing)
-2. [x] ~~Persist zakat data to Supabase~~ (DONE — v2 JSONB format)
-3. [x] ~~Choose and configure custom domain~~ (struck off — keeping zakatukum.com/zakatukum.app)
-4. [x] ~~Wire up email reminder backend~~ (DONE — Resend with verified domain)
-5. [ ] Fix Vercel API routes 500 error (outputFileTracingRoot issue)
-6. [ ] Set is_admin flag in Supabase profiles
-7. [ ] Landing page for new users
+1. [x] ~~Persist zakat data to Supabase~~ (DONE — v2 JSONB format)
+2. [x] ~~Wire up email reminder backend~~ (DONE — Resend with verified domain)
+3. [x] ~~Fix Vercel API routes 500 error~~ (DONE — removed outputFileTracingRoot)
+4. [x] ~~Set is_admin flag in Supabase profiles~~ (DONE — added column + set for admin)
+5. [x] ~~Landing page for new users~~ (DONE — professional marketing page with design system)
+6. [x] ~~Feedback system~~ (DONE — form + API + Supabase table + admin view)
+7. [x] ~~DESIGN.md~~ (DONE — awesome-design-md format, Stripe-inspired)
 8. [ ] Initialize Expo project and migrate calculator
 9. [ ] Open Apple Developer and Google Play accounts
 10. [ ] Plan beta testing with Islamic communities
