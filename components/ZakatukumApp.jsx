@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from "recharts";
 import { getSupabase } from "@/lib/supabase";
 
@@ -924,12 +924,29 @@ export default function ZakatukumPreview() {
     }));
   };
 
-  // Fetch gold price directly from free CORS-enabled APIs
+  // Fetch gold price from free CORS-enabled APIs
+  // Live: gold-api.com | Historical: freegoldapi.com (daily data, CORS: *)
   const TROY_OZ_TO_GRAMS = 31.1035;
+  const goldHistoryCache = useRef(null); // cache the historical dataset
+
   const fetchGoldPrice = async (date) => {
     setGoldPriceLoading(true);
     try {
-      // Source 1: gold-api.com (free, no key, CORS enabled, live price)
+      // If a specific date is requested, try historical data first
+      if (date) {
+        const histPrice = await fetchHistoricalGoldPrice(date);
+        if (histPrice) {
+          const pricePerGram = Math.round((histPrice.price / TROY_OZ_TO_GRAMS) * 100) / 100;
+          updateCurrentYear("goldPrice", pricePerGram);
+          updateCurrentYear("goldPriceSource", histPrice.source);
+          updateCurrentYear("lockDate", date);
+          addToast(`Gold on ${histPrice.matchedDate}: $${pricePerGram}/g`, "success");
+          setGoldPriceLoading(false);
+          return;
+        }
+      }
+
+      // Live price from gold-api.com
       try {
         const res = await fetch("https://api.gold-api.com/price/XAU");
         if (res.ok) {
@@ -937,16 +954,16 @@ export default function ZakatukumPreview() {
           if (data && data.price) {
             const pricePerGram = Math.round((data.price / TROY_OZ_TO_GRAMS) * 100) / 100;
             updateCurrentYear("goldPrice", pricePerGram);
-            updateCurrentYear("goldPriceSource", "gold-api.com");
+            updateCurrentYear("goldPriceSource", "gold-api.com (live)");
             if (date) updateCurrentYear("lockDate", date);
-            addToast(`Gold: $${pricePerGram}/g${date ? " (locked " + date + ")" : " (live)"}`, "success");
+            addToast(`Gold: $${pricePerGram}/g (live${date ? ", no historical data for " + date : ""})`, "success");
             setGoldPriceLoading(false);
             return;
           }
         }
-      } catch (e) { /* try next source */ }
+      } catch (e) { /* try next */ }
 
-      // Source 2: Swissquote (free, CORS, live XAU/USD)
+      // Fallback: Swissquote
       try {
         const res = await fetch("https://forex-data-feed.swissquote.com/public-quotes/bboquotes/instrument/XAU/USD");
         if (res.ok) {
@@ -955,20 +972,59 @@ export default function ZakatukumPreview() {
             const bid = data[0].spreadProfilePrices[0].bid;
             const pricePerGram = Math.round((bid / TROY_OZ_TO_GRAMS) * 100) / 100;
             updateCurrentYear("goldPrice", pricePerGram);
-            updateCurrentYear("goldPriceSource", "swissquote.com");
+            updateCurrentYear("goldPriceSource", "swissquote.com (live)");
             if (date) updateCurrentYear("lockDate", date);
-            addToast(`Gold: $${pricePerGram}/g${date ? " (locked " + date + ")" : " (live)"}`, "success");
+            addToast(`Gold: $${pricePerGram}/g (live)`, "success");
             setGoldPriceLoading(false);
             return;
           }
         }
-      } catch (e) { /* try next source */ }
+      } catch (e) { /* fallthrough */ }
 
       throw new Error("All sources failed");
     } catch (e) {
       addToast("Could not fetch gold price. Please enter manually.", "error");
     } finally {
       setGoldPriceLoading(false);
+    }
+  };
+
+  // Fetch historical gold price from freegoldapi.com (CORS: *, daily data)
+  const fetchHistoricalGoldPrice = async (targetDate) => {
+    try {
+      // Load and cache the full dataset on first call
+      if (!goldHistoryCache.current) {
+        const res = await fetch("https://freegoldapi.com/data/latest.json");
+        if (!res.ok) return null;
+        const allData = await res.json();
+        // Filter to USD-based entries (yahoo_finance source) and sort by date
+        goldHistoryCache.current = allData
+          .filter(d => d.source === "yahoo_finance" || d.source === "worldbank")
+          .sort((a, b) => a.date.localeCompare(b.date));
+      }
+
+      const data = goldHistoryCache.current;
+      if (!data || data.length === 0) return null;
+
+      // Find exact match or closest prior date
+      let match = null;
+      for (let i = data.length - 1; i >= 0; i--) {
+        if (data[i].date <= targetDate) {
+          match = data[i];
+          break;
+        }
+      }
+
+      if (match) {
+        return {
+          price: match.price,
+          matchedDate: match.date,
+          source: match.date === targetDate ? "freegoldapi" : `freegoldapi (closest: ${match.date})`,
+        };
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
   };
 
