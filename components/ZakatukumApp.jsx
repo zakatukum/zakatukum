@@ -361,6 +361,8 @@ const TRANSLATIONS = {
   "payment_history": { en: "Payment History", ar: "سجل الدفعات", ur: "ادائیگی کی تاریخ", tr: "Ödeme Geçmişi", ms: "Sejarah Pembayaran", id: "Riwayat Pembayaran", fr: "Historique des paiements", es: "Historial de pagos", de: "Zahlungshistorie", bn: "পেমেন্টের ইতিহাস" },
   "fee_warning": { en: "Important: Payment Processing Fees", ar: "مهم: رسوم معالجة الدفع", ur: "اہم: ادائیگی پروسیسنگ فیس", tr: "Önemli: Ödeme İşlem Ücretleri", ms: "Penting: Yuran Pemprosesan Pembayaran", id: "Penting: Biaya Pemrosesan Pembayaran", fr: "Important: Frais de traitement des paiements", es: "Importante: Tarifas de procesamiento de pagos", de: "Wichtig: Zahlungsbearbeitungsgebühren", bn: "গুরুত্বপূর্ণ: পেমেন্ট প্রসেসিং ফি" },
   "admin_dashboard": { en: "Admin Dashboard", ar: "لوحة الإدارة", ur: "ایڈمن ڈیش بورڈ", tr: "Yönetici Paneli", ms: "Panel Pentadbir", id: "Dasbor Admin", fr: "Tableau de bord admin", es: "Panel de administración", de: "Admin-Dashboard", bn: "অ্যাডমিন ড্যাশবোর্ড" },
+  "feedback": { en: "Feedback", ar: "ملاحظات", ur: "رائے", tr: "Geri Bildirim", ms: "Maklum Balas", id: "Umpan Balik", fr: "Commentaires", es: "Comentarios", de: "Feedback", bn: "মতামত" },
+  "feedback_submitted": { en: "Thank you! Your feedback has been submitted.", ar: "شكراً! تم إرسال ملاحظاتك.", ur: "شکریہ! آپ کی رائے بھیج دی گئی۔", tr: "Teşekkürler! Geri bildiriminiz gönderildi.", ms: "Terima kasih! Maklum balas anda telah dihantar.", id: "Terima kasih! Umpan balik Anda telah dikirim.", fr: "Merci ! Vos commentaires ont été soumis.", es: "¡Gracias! Sus comentarios han sido enviados.", de: "Danke! Ihr Feedback wurde gesendet.", bn: "ধন্যবাদ! আপনার মতামত জমা দেওয়া হয়েছে।" },
 };
 
 
@@ -494,13 +496,13 @@ const MADHAB_RULES = {
   },
 };
 
-export default function ZakatukumPreview() {
+export default function ZakatukumPreview({ initialAuthMode }) {
   // Get Supabase client (lazy init — ensures env vars are available at runtime)
   const supabase = getSupabase();
 
   // Auth state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [authMode, setAuthMode] = useState("login"); // "login", "signup", "reset", or "update-password"
+  const [authMode, setAuthMode] = useState(initialAuthMode || "login"); // "login", "signup", "reset", or "update-password"
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authName, setAuthName] = useState("");
@@ -583,6 +585,16 @@ export default function ZakatukumPreview() {
   const [newYearInput, setNewYearInput] = useState("");
   const [goldPriceLoading, setGoldPriceLoading] = useState(false);
   const [reminders, setReminders] = useState({ reminder_30d: false, reminder_7d: true, reminder_due: true, reminder_monthly: false });
+
+  // ─── Feedback State ───
+  const [feedbackCategory, setFeedbackCategory] = useState("general");
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackSuccess, setFeedbackSuccess] = useState(false);
+  const [feedbackError, setFeedbackError] = useState("");
+  const [feedbackList, setFeedbackList] = useState([]);
+  const [feedbackListLoading, setFeedbackListLoading] = useState(false);
 
   // ─── Toast & Mobile UI State ───
   const [toasts, setToasts] = useState([]);
@@ -1566,6 +1578,7 @@ export default function ZakatukumPreview() {
             { id: "mining", icon: "⛏️", label: t("mining") },
             { id: "rental", icon: "🏠", label: t("rental") },
             { id: "report", icon: "📄", label: t("report") },
+            { id: "feedback", icon: "💬", label: t("feedback") },
             { id: "settings", icon: "⚙️", label: t("profile_settings") },
           ].concat(isAdmin ? [{ id: "admin", icon: "📈", label: t("admin_dashboard") }] : []).map(n => (
             <button key={n.id} onClick={() => { setView(n.id); setShowUserMenu(false); }} style={S.navBtn(view === n.id)}>
@@ -2683,6 +2696,159 @@ export default function ZakatukumPreview() {
             </div>
           )}
 
+          {view === "feedback" && (
+            <div>
+              <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#1B5E20" }}>{t("feedback")}</h2>
+              <p style={{ margin: "0 0 24px", fontSize: 13, color: "#999" }}>Help us improve Zakatukum — we read every message.</p>
+
+              {feedbackSuccess ? (
+                <SectionCard title={t("feedback")} color="#2E7D32">
+                  <div style={{ textAlign: "center", padding: "32px 0" }}>
+                    <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+                    <p style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 700, color: "#1B5E20" }}>{t("feedback_submitted")}</p>
+                    <p style={{ margin: "0 0 20px", fontSize: 13, color: "#888" }}>We appreciate you taking the time to share your thoughts.</p>
+                    <button onClick={() => { setFeedbackSuccess(false); setFeedbackMessage(""); setFeedbackRating(0); setFeedbackCategory("general"); }} style={{ ...S.greenBtn, fontSize: 13, padding: "10px 24px" }}>Submit Another</button>
+                  </div>
+                </SectionCard>
+              ) : (
+                <SectionCard title="Share Your Feedback" color="#1B5E20">
+                  {feedbackError && <p style={{ margin: "0 0 12px", fontSize: 13, color: "#C62828", background: "#FFEBEE", padding: "10px 14px", borderRadius: 8 }}>{feedbackError}</p>}
+
+                  {/* Category */}
+                  <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Category</label>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
+                    {[
+                      ["general", "💬", "General"],
+                      ["feature", "💡", "Feature Request"],
+                      ["bug", "🐛", "Bug Report"],
+                      ["ui", "🎨", "Design / UI"],
+                      ["calculation", "🧮", "Calculation Issue"],
+                      ["payment", "💳", "Payment"],
+                      ["other", "📝", "Other"],
+                    ].map(([id, icon, label]) => (
+                      <button key={id} onClick={() => setFeedbackCategory(id)} style={{
+                        padding: "8px 14px", borderRadius: 8, border: `2px solid ${feedbackCategory === id ? "#1B5E20" : "#e0e0e0"}`,
+                        background: feedbackCategory === id ? "#e8f5e9" : "#fff", cursor: "pointer",
+                        fontSize: 13, fontWeight: feedbackCategory === id ? 700 : 500,
+                        color: feedbackCategory === id ? "#1B5E20" : "#555", transition: "all 0.15s",
+                      }}>
+                        {icon} {label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Rating */}
+                  <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 6 }}>How would you rate your experience?</label>
+                  <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button key={star} onClick={() => setFeedbackRating(star)} style={{
+                        width: 44, height: 44, borderRadius: 10, border: "2px solid " + (feedbackRating >= star ? "#FFB300" : "#e0e0e0"),
+                        background: feedbackRating >= star ? "#FFF8E1" : "#fff", cursor: "pointer",
+                        fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center",
+                        transition: "all 0.15s",
+                      }}>
+                        {feedbackRating >= star ? "⭐" : "☆"}
+                      </button>
+                    ))}
+                    {feedbackRating > 0 && <span style={{ fontSize: 12, color: "#888", alignSelf: "center", marginLeft: 8 }}>{["", "Poor", "Fair", "Good", "Great", "Excellent"][feedbackRating]}</span>}
+                  </div>
+
+                  {/* Message */}
+                  <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Your Message *</label>
+                  <textarea
+                    value={feedbackMessage}
+                    onChange={e => setFeedbackMessage(e.target.value)}
+                    placeholder="Tell us what you like, what could be better, or report an issue..."
+                    style={{
+                      ...S.input, minHeight: 120, resize: "vertical", fontFamily: "inherit",
+                      lineHeight: 1.5, marginBottom: 4,
+                    }}
+                  />
+                  <p style={{ margin: "0 0 18px", fontSize: 11, color: "#999" }}>{feedbackMessage.length}/1000 characters</p>
+
+                  {/* Submit */}
+                  <button
+                    disabled={feedbackLoading || !feedbackMessage.trim()}
+                    onClick={async () => {
+                      if (!feedbackMessage.trim()) return;
+                      if (feedbackMessage.length > 1000) { setFeedbackError("Please keep your message under 1000 characters."); return; }
+                      setFeedbackLoading(true);
+                      setFeedbackError("");
+                      try {
+                        const { data: { session: s } } = await supabase.auth.getSession();
+                        const res = await fetch("/api/feedback", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", Authorization: `Bearer ${s?.access_token}` },
+                          body: JSON.stringify({ category: feedbackCategory, rating: feedbackRating || null, message: feedbackMessage }),
+                        });
+                        const json = await res.json();
+                        if (!res.ok) throw new Error(json.error || "Failed to submit");
+                        setFeedbackSuccess(true);
+                        addToast(t("feedback_submitted"), "success");
+                      } catch (err) {
+                        setFeedbackError(err.message);
+                      } finally {
+                        setFeedbackLoading(false);
+                      }
+                    }}
+                    style={{
+                      ...S.greenBtn, fontSize: 14, padding: "12px 28px",
+                      opacity: feedbackLoading || !feedbackMessage.trim() ? 0.5 : 1,
+                      cursor: feedbackLoading || !feedbackMessage.trim() ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {feedbackLoading ? "Submitting..." : "Submit Feedback"}
+                  </button>
+                </SectionCard>
+              )}
+
+              {/* User's previous feedback */}
+              <SectionCard title="Your Previous Feedback" color="#1565C0" action={
+                <button onClick={async () => {
+                  setFeedbackListLoading(true);
+                  try {
+                    const { data: { session: s } } = await supabase.auth.getSession();
+                    const res = await fetch("/api/feedback", { headers: { Authorization: `Bearer ${s?.access_token}` } });
+                    const json = await res.json();
+                    if (res.ok) setFeedbackList(json.feedback || []);
+                  } catch (e) { /* ignore */ }
+                  setFeedbackListLoading(false);
+                }} style={{ fontSize: 12, padding: "6px 14px", borderRadius: 8, border: "1px solid #e0e0e0", background: "#fff", cursor: "pointer", fontWeight: 600, color: "#1565C0" }}>
+                  Refresh
+                </button>
+              }>
+                {feedbackListLoading ? (
+                  <p style={{ margin: 0, fontSize: 13, color: "#888", padding: "16px 0", textAlign: "center" }}>Loading...</p>
+                ) : feedbackList.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: 13, color: "#888", padding: "16px 0", textAlign: "center" }}>No feedback submitted yet. Click Refresh to load your history.</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {feedbackList.map(fb => (
+                      <div key={fb.id} style={{ padding: "12px 14px", borderRadius: 10, background: "#f8f9fa", border: "1px solid #e8e8e8" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                          <span style={{
+                            fontSize: 11, fontWeight: 700, textTransform: "uppercase", padding: "3px 8px",
+                            borderRadius: 6, background: fb.category === "bug" ? "#FFEBEE" : fb.category === "feature" ? "#E3F2FD" : "#E8F5E9",
+                            color: fb.category === "bug" ? "#C62828" : fb.category === "feature" ? "#1565C0" : "#2E7D32",
+                          }}>{fb.category}</span>
+                          <span style={{ fontSize: 11, color: "#999" }}>{new Date(fb.created_at).toLocaleDateString()}</span>
+                        </div>
+                        {fb.rating && <div style={{ fontSize: 14, marginBottom: 4 }}>{"⭐".repeat(fb.rating)}{"☆".repeat(5 - fb.rating)}</div>}
+                        <p style={{ margin: 0, fontSize: 13, color: "#333", lineHeight: 1.5 }}>{fb.message}</p>
+                        {fb.status && fb.status !== "new" && (
+                          <div style={{ marginTop: 8, padding: "6px 10px", borderRadius: 6, background: "#FFF8E1", border: "1px solid #FFE082" }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: "#E65100" }}>Status: {fb.status}</span>
+                            {fb.admin_response && <p style={{ margin: "4px 0 0", fontSize: 12, color: "#555" }}>{fb.admin_response}</p>}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </SectionCard>
+            </div>
+          )}
+
           {view === "admin" && isAdmin && (
             <div>
               <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#1B5E20" }}>Admin Dashboard</h2>
@@ -2714,6 +2880,56 @@ export default function ZakatukumPreview() {
                 <p style={{ margin: 0, fontSize: 13, color: "#666", padding: "20px 0", textAlign: "center" }}>
                   Real-time signup data will load here from Supabase auth admin API.
                 </p>
+              </SectionCard>
+
+              <SectionCard title="User Feedback" color="#E65100" action={
+                <button onClick={async () => {
+                  setFeedbackListLoading(true);
+                  try {
+                    const { data: { session: s } } = await supabase.auth.getSession();
+                    const res = await fetch("/api/feedback", { headers: { Authorization: `Bearer ${s?.access_token}` } });
+                    const json = await res.json();
+                    if (res.ok) setFeedbackList(json.feedback || []);
+                  } catch (e) { /* ignore */ }
+                  setFeedbackListLoading(false);
+                }} style={{ fontSize: 12, padding: "6px 14px", borderRadius: 8, border: "1px solid #e0e0e0", background: "#fff", cursor: "pointer", fontWeight: 600, color: "#E65100" }}>
+                  Load Feedback
+                </button>
+              }>
+                {feedbackListLoading ? (
+                  <p style={{ margin: 0, fontSize: 13, color: "#888", padding: "16px 0", textAlign: "center" }}>Loading...</p>
+                ) : feedbackList.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: 13, color: "#888", padding: "16px 0", textAlign: "center" }}>Click "Load Feedback" to see all user submissions.</p>
+                ) : (
+                  <div>
+                    <p style={{ margin: "0 0 12px", fontSize: 12, color: "#888" }}>{feedbackList.length} feedback submissions</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 500, overflowY: "auto" }}>
+                      {feedbackList.map(fb => (
+                        <div key={fb.id} style={{ padding: "12px 14px", borderRadius: 10, background: "#f8f9fa", border: "1px solid #e8e8e8" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                              <span style={{
+                                fontSize: 11, fontWeight: 700, textTransform: "uppercase", padding: "3px 8px",
+                                borderRadius: 6,
+                                background: fb.category === "bug" ? "#FFEBEE" : fb.category === "feature" ? "#E3F2FD" : fb.category === "calculation" ? "#FFF3E0" : "#E8F5E9",
+                                color: fb.category === "bug" ? "#C62828" : fb.category === "feature" ? "#1565C0" : fb.category === "calculation" ? "#E65100" : "#2E7D32",
+                              }}>{fb.category}</span>
+                              <span style={{
+                                fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 6,
+                                background: fb.status === "new" ? "#E3F2FD" : fb.status === "reviewed" ? "#FFF8E1" : fb.status === "resolved" ? "#E8F5E9" : "#F3E5F5",
+                                color: fb.status === "new" ? "#1565C0" : fb.status === "reviewed" ? "#F57F17" : fb.status === "resolved" ? "#2E7D32" : "#7B1FA2",
+                              }}>{fb.status || "new"}</span>
+                            </div>
+                            <span style={{ fontSize: 11, color: "#999" }}>{new Date(fb.created_at).toLocaleDateString()}</span>
+                          </div>
+                          <p style={{ margin: "0 0 4px", fontSize: 11, color: "#999" }}>From: {fb.user_email}</p>
+                          {fb.rating && <div style={{ fontSize: 13, marginBottom: 4 }}>{"⭐".repeat(fb.rating)}{"☆".repeat(5 - fb.rating)}</div>}
+                          <p style={{ margin: 0, fontSize: 13, color: "#333", lineHeight: 1.5 }}>{fb.message}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </SectionCard>
             </div>
           )}
