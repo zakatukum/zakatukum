@@ -211,12 +211,34 @@
 - [ ] Terms of Service and Privacy Policy
 - [ ] Cookie policy and GDPR compliance
 
-### Security
+### Security & Hardening
+> **Passive recon findings (April 2026):** infrastructure scan of zakatukum.com
+
+**HIGH Priority**
+- [ ] **Fix CORS wildcard** — `Access-Control-Allow-Origin: *` is set on all responses. Must restrict to specific origins or remove entirely. Any website can currently make cross-origin requests and read responses — serious risk once auth/user data is involved.
+
+**MEDIUM Priority**
+- [ ] **Fix HTTP redirect** — `http://zakatukum.com` currently 308 redirects to `https://vercel.com/` instead of `https://zakatukum.com`. Fix in Vercel domain config so HTTP → HTTPS redirects to the correct domain.
+- [ ] **Add www CNAME** — `www.zakatukum.com` returns `dns_nxdomain`. Add a `www` CNAME in Cloudflare DNS pointing to Vercel so users who type www don't get an error.
+- [ ] **Add security headers** — missing `Content-Security-Policy` (XSS risk), `X-Frame-Options` (clickjacking risk), `X-Content-Type-Options` (MIME sniffing risk), `Referrer-Policy`, and `Permissions-Policy`. Add via `next.config.js` headers or `vercel.json`.
+
+**LOW Priority**
+- [ ] **Add robots.txt** — currently returns 404. Create a proper `/public/robots.txt`.
+- [ ] **Add security.txt** — `/.well-known/security.txt` returns 404. Add contact info for responsible disclosure.
+- [ ] **Add sitemap.xml** — helps with SEO crawling.
+- [ ] **Reduce information disclosure** — Next.js chunk naming patterns and `x-vercel-id` headers expose tech stack. Minor but aids reconnaissance.
+
+**Already Good ✓**
+- `.env` and `.git/config` return 404 — no secret exposure ✅
+- wp-admin/wp-login blocked with 403 via Vercel WAF ✅
+- TLS 1.3 with AES-256-GCM-SHA384 / X25519 ✅
+- HSTS enabled with 2-year max-age ✅
+- No server version leakage beyond "Vercel" ✅
+
+**General Security (original items)**
 - [ ] Encrypt sensitive data at rest
 - [ ] Rate limiting on all endpoints
 - [ ] Input validation and SQL injection prevention
-- [ ] HTTPS everywhere with HSTS headers
-- [ ] CORS lockdown
 - [ ] Security audit
 
 ---
