@@ -793,15 +793,22 @@ export default function ZakatukumPreview({ initialAuthMode }) {
   }, [session, userId]);
 
   // Save ALL years whenever yearlyData changes (debounced)
+  const prevYearlyDataRef = useRef(yearlyData);
   useEffect(() => {
     if (!isLoggedIn || !session) return;
     const timer = setTimeout(() => {
+      const prev = prevYearlyDataRef.current;
       Object.entries(yearlyData).forEach(([yearKey, data]) => {
-        saveToSupabase(yearKey, data);
+        // Only save years that actually changed
+        if (prev[yearKey] !== data) {
+          saveToSupabase(yearKey, data);
+        }
       });
-    }, 2000); // 2 second debounce
+      prevYearlyDataRef.current = yearlyData;
+    }, 2500); // 2.5 second debounce
     return () => clearTimeout(timer);
-  }, [yearlyData, isLoggedIn, session, saveToSupabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [yearlyData, isLoggedIn, session]);
 
   // ─── Password reset handler ───
   const handlePasswordReset = async (e) => {
@@ -1795,7 +1802,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                 <div style={{ ...S.card, padding: "14px 18px" }}>
                   <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Gold Price ({currencyInfo.symbol}/gram)</label>
                   <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-                    <input value={currentYearData.goldPrice} onChange={e => updateCurrentYear("goldPrice", parseFloat(e.target.value) || 0)} style={{ ...S.input, ...S.numInput, flex: 1, fontSize: 20, fontWeight: 700, color: "#1B5E20", background: "#FFF8E1" }} />
+                    <input type="number" value={currentYearData.goldPrice || ""} onChange={e => updateCurrentYear("goldPrice", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)} placeholder="0" style={{ ...S.input, ...S.numInput, flex: 1, fontSize: 20, fontWeight: 700, color: "#1B5E20", background: "#FFF8E1" }} />
                     <button onClick={() => fetchGoldPrice()} disabled={goldPriceLoading} style={{ ...S.headerBtn, background: goldPriceLoading ? "#ccc" : "#e8f5e9", color: "#2E7D32", border: "1px solid #C8E6C9", cursor: goldPriceLoading ? "wait" : "pointer", minWidth: 60 }}>{goldPriceLoading ? "..." : "⟳ Live"}</button>
                   </div>
                   {currentYearData.goldPriceSource && <p style={{ margin: "4px 0 0", fontSize: 10, color: "#999" }}>via {currentYearData.goldPriceSource}</p>}
@@ -1816,59 +1823,70 @@ export default function ZakatukumPreview({ initialAuthMode }) {
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div>
-                  <SectionCard title={t("gold_jewelry")} color="#F9A825" action={<span style={{ fontSize: 11, color: "rgba(255,255,255,0.8)" }}>7 items</span>}>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                      <thead><tr>{[t("item"), t("weight"), t("net_gold"), t("value"), t("zakat")].map(h => <th key={h} style={S.th}>{h}</th>)}</tr></thead>
-                      <tbody>
-                        {(currentYearData.goldItems || []).map((g, i) => (
-                          <tr key={i}>
-                            <td style={{ ...S.td, fontSize: 12 }}>{g.name}</td>
-                            <td style={{ ...S.td, textAlign: "right", fontSize: 12 }}>{g.wt}g</td>
-                            <td style={{ ...S.td, textAlign: "right", fontSize: 12, color: "#1B5E20", fontWeight: 600 }}>{g.net}g</td>
-                            <td style={{ ...S.td, textAlign: "right", fontSize: 12 }}>{fmt(g.net * currentYearData.goldPrice)}</td>
-                            <td style={{ ...S.td, textAlign: "right", fontSize: 12, color: "#2E7D32", fontWeight: 600 }}>{fmt(g.net * currentYearData.goldPrice * 0.025)}</td>
+                  <SectionCard title={t("gold_jewelry")} color="#F9A825" action={<span style={{ fontSize: 11, color: "rgba(255,255,255,0.8)" }}>{currentYearData.manualEntries.goldItems.length} items</span>}>
+                    {currentYearData.manualEntries.goldItems.length > 0 ? (
+                      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                        <thead><tr>{[t("item"), t("weight"), "Purity", t("value"), t("zakat")].map(h => <th key={h} style={S.th}>{h}</th>)}</tr></thead>
+                        <tbody>
+                          {currentYearData.manualEntries.goldItems.map((g, i) => {
+                            const gVal = parseFloat(g.value) || 0;
+                            return (
+                              <tr key={i}>
+                                <td style={{ ...S.td, fontSize: 12 }}>{g.name || "—"}</td>
+                                <td style={{ ...S.td, textAlign: "right", fontSize: 12 }}>{(g.weight || 0).toFixed(1)}g</td>
+                                <td style={{ ...S.td, textAlign: "right", fontSize: 12 }}>{g.purity || 100}%</td>
+                                <td style={{ ...S.td, textAlign: "right", fontSize: 12 }}>{fmt(gVal)}</td>
+                                <td style={{ ...S.td, textAlign: "right", fontSize: 12, color: "#2E7D32", fontWeight: 600 }}>{fmt(gVal * 0.025)}</td>
+                              </tr>
+                            );
+                          })}
+                          <tr style={{ background: "#e8f5e9" }}>
+                            <td colSpan={3} style={{ ...S.td, fontWeight: 700, color: "#1B5E20" }}>TOTAL</td>
+                            <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{fmt(currentYearData.manualEntries.goldItems.reduce((s,g) => s + (parseFloat(g.value) || 0), 0))}</td>
+                            <td style={{ ...S.td, textAlign: "right", fontWeight: 700, color: "#1B5E20" }}>{fmt(currentYearData.manualEntries.goldItems.reduce((s,g) => s + (parseFloat(g.value) || 0), 0) * 0.025)}</td>
                           </tr>
-                        ))}
-                        <tr style={{ background: "#e8f5e9" }}>
-                          <td style={{ ...S.td, fontWeight: 700, color: "#1B5E20" }}>TOTAL</td>
-                          <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{(currentYearData.goldItems || []).reduce((s,g) => s+g.wt, 0).toFixed(1)}g</td>
-                          <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{(currentYearData.goldItems || []).reduce((s,g) => s+g.net, 0).toFixed(1)}g</td>
-                          <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{fmt(currentYearData.gold)}</td>
-                          <td style={{ ...S.td, textAlign: "right", fontWeight: 700, color: "#1B5E20" }}>{fmt(currentYearData.gold * 0.025)}</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                        </tbody>
+                      </table>
+                    ) : (
+                      <p style={{ margin: 0, fontSize: 13, color: "#999", textAlign: "center", padding: "12px 0" }}>No gold items added. Go to <span onClick={() => setView("accounts")} style={{ cursor: "pointer", color: "#1B5E20", textDecoration: "underline", fontWeight: 600 }}>Accounts</span> to add gold & jewelry.</p>
+                    )}
                   </SectionCard>
 
                   <SectionCard title={t("business_inventory")} color="#6D4C41">
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div><span style={{ fontSize: 12, color: "#888" }}>{t("business_inventory")}: </span><span style={{ fontSize: 16, fontWeight: 700, color: "#333" }}>$0</span></div>
-                      <div><span style={{ fontSize: 12, color: "#888" }}>{t("zakat")}: </span><span style={{ fontSize: 16, fontWeight: 700, color: "#1B5E20" }}>$0</span></div>
+                      <div><span style={{ fontSize: 12, color: "#888" }}>{t("business_inventory")}: </span><span style={{ fontSize: 16, fontWeight: 700, color: "#333" }}>{fmt(parseFloat(currentYearData.manualEntries.businessInventory) || 0)}</span></div>
+                      <div><span style={{ fontSize: 12, color: "#888" }}>{t("zakat")}: </span><span style={{ fontSize: 16, fontWeight: 700, color: "#1B5E20" }}>{fmt((parseFloat(currentYearData.manualEntries.businessInventory) || 0) * 0.025)}</span></div>
                     </div>
                   </SectionCard>
                 </div>
 
                 <div>
                   <SectionCard title={t("cash_home")} color="#1565C0">
-                    <p style={{ margin: 0, fontSize: 13, color: "#999", textAlign: "center", padding: "16px 0" }}>No bank accounts added yet. Connect accounts or add manually.</p>
-                    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0 0", marginTop: 4, borderTop: "2px solid #e8f5e9", fontWeight: 700, color: "#1B5E20" }}>
-                      <span>TOTAL</span><span>{fmt(currentYearData.cash)}</span>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0" }}>
+                      <span style={{ fontSize: 13, color: "#666" }}>Cash at Home</span>
+                      <span style={{ fontSize: 18, fontWeight: 700, color: "#1B5E20" }}>{fmt(parseFloat(currentYearData.manualEntries.cashHome) || 0)}</span>
                     </div>
+                    {!(parseFloat(currentYearData.manualEntries.cashHome) > 0) && (
+                      <p style={{ margin: "4px 0 0", fontSize: 12, color: "#999", textAlign: "center" }}>Go to <span onClick={() => setView("accounts")} style={{ cursor: "pointer", color: "#1B5E20", textDecoration: "underline", fontWeight: 600 }}>Accounts</span> to add cash and other assets.</p>
+                    )}
                   </SectionCard>
 
-                  <SectionCard title={t("investments")} color="#6A1B9A" action={<span style={{ fontSize: 11, color: "rgba(255,255,255,0.8)" }}>{(currentYearData.investments || []).length} holdings</span>}>
-                    {(currentYearData.investments || []).map((inv, i) => (
-                      <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid #f5f5f5", fontSize: 13 }}>
-                        <span style={{ color: "#555" }}>{inv.name}</span>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{fmt(inv.val)}</span>
-                          <span style={{ fontSize: 10, padding: "2px 6px", borderRadius: 4, background: "#E8F5E9", color: "#2E7D32", fontWeight: 600 }}>✓</span>
+                  <SectionCard title={t("investments")} color="#6A1B9A">
+                    {currentYearData.manualEntries.otherAssets.filter(a => a.value).length > 0 ? (
+                      <>
+                        {currentYearData.manualEntries.otherAssets.filter(a => a.value).map((asset, i) => (
+                          <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid #f5f5f5", fontSize: 13 }}>
+                            <span style={{ color: "#555" }}>{asset.description || "Other Asset"}</span>
+                            <span style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{fmt(parseFloat(asset.value) || 0)}</span>
+                          </div>
+                        ))}
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0 0", marginTop: 4, borderTop: "2px solid #e8f5e9", fontWeight: 700, color: "#1B5E20" }}>
+                          <span>TOTAL</span><span>{fmt(currentYearData.manualEntries.otherAssets.reduce((s,o) => s + (parseFloat(o.value) || 0), 0))}</span>
                         </div>
-                      </div>
-                    ))}
-                    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0 0", marginTop: 4, borderTop: "2px solid #e8f5e9", fontWeight: 700, color: "#1B5E20" }}>
-                      <span>TOTAL</span><span>{fmt(currentYearData.inv)}</span>
-                    </div>
+                      </>
+                    ) : (
+                      <p style={{ margin: 0, fontSize: 13, color: "#999", textAlign: "center", padding: "12px 0" }}>No other assets added. Go to <span onClick={() => setView("accounts")} style={{ cursor: "pointer", color: "#1B5E20", textDecoration: "underline", fontWeight: 600 }}>Accounts</span> to add investments & assets.</p>
+                    )}
                   </SectionCard>
                 </div>
               </div>
@@ -1876,14 +1894,14 @@ export default function ZakatukumPreview({ initialAuthMode }) {
               <div style={{ background: "linear-gradient(135deg, #1B5E20, #2E7D32, #388E3C)", borderRadius: 16, padding: "24px 28px", marginTop: 16, color: "#fff" }}>
                 <h3 style={{ margin: "0 0 14px", fontSize: 15, fontWeight: 700, opacity: 0.9 }}>{t("zakat_calc_summary").toUpperCase()}</h3>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-                  {[[t("gold_jewelry"), currentYearData.gold], [t("cash_home"), currentYearData.cash], [t("investments"), currentYearData.inv], [t("debts_owed"), 0], ["Less: Liabilities", 0], [t("business_inventory"), 0]].map(([l, v], i) => (
+                  {[[t("gold_jewelry"), currentYearData.manualEntries.goldItems.reduce((s,g) => s + (parseFloat(g.value) || 0), 0)], [t("cash_home"), parseFloat(currentYearData.manualEntries.cashHome) || 0], ["Other Assets", currentYearData.manualEntries.otherAssets.reduce((s,o) => s + (parseFloat(o.value) || 0), 0)], [t("debts_owed"), currentYearData.manualEntries.debtsOwed.reduce((s,d) => s + (parseFloat(d.amount) || 0), 0)], ["Less: Liabilities", totalLiabilities], [t("business_inventory"), parseFloat(currentYearData.manualEntries.businessInventory) || 0]].map(([l, v], i) => (
                     <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.12)", fontSize: 13 }}>
                       <span style={{ opacity: 0.75 }}>{l}</span><span style={{ fontWeight: 700 }}>{fmt(v)}</span>
                     </div>
                   ))}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, paddingTop: 14, borderTop: "2px solid rgba(255,255,255,0.25)" }}>
-                  <div><p style={{ margin: 0, fontSize: 12, opacity: 0.7 }}>Total Zakatable Wealth</p><p style={{ margin: "4px 0 0", fontSize: 30, fontWeight: 800 }}>{fmt(totalWealth)}</p></div>
+                  <div><p style={{ margin: 0, fontSize: 12, opacity: 0.7 }}>Total Zakatable Wealth</p><p style={{ margin: "4px 0 0", fontSize: 30, fontWeight: 800 }}>{fmt(totalAssetsComputed)}</p></div>
                   <div style={{ textAlign: "right" }}><p style={{ margin: 0, fontSize: 12, opacity: 0.7 }}>{t("zakat_due")}</p><p style={{ margin: "4px 0 0", fontSize: 30, fontWeight: 800, color: "#FFD54F" }}>{fmt(zakatDue)}</p></div>
                 </div>
               </div>
@@ -1959,15 +1977,15 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                     <tbody>
                       {currentYearData.manualEntries.goldItems.map((item, i) => (
                         <tr key={i} style={i % 2 === 0 ? { background: "#fafafa" } : {}}>
-                          <td style={S.td}>{item.name}</td>
-                          <td style={{ ...S.td, textAlign: "right" }}>{item.weight.toFixed(2)}</td>
-                          <td style={{ ...S.td, textAlign: "right" }}>{item.purity}%</td>
-                          <td style={{ ...S.td, textAlign: "right", fontWeight: 600 }}>{fmt(item.value)}</td>
+                          <td style={S.td}><input placeholder="Ring, Necklace..." value={item.name} onChange={e => { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], name: e.target.value }; updateManualEntry("goldItems", updated); }} style={{ ...S.input, padding: "4px 6px", fontSize: 12 }} /></td>
+                          <td style={S.td}><input type="number" placeholder="0" value={item.weight || ""} onChange={e => { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], weight: e.target.value === "" ? 0 : parseFloat(e.target.value) || 0 }; updateManualEntry("goldItems", updated); }} style={{ ...S.input, ...S.numInput, padding: "4px 6px", fontSize: 12, width: 70 }} /></td>
+                          <td style={S.td}><input type="number" placeholder="100" value={item.purity || ""} onChange={e => { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], purity: e.target.value === "" ? 100 : parseInt(e.target.value) || 100 }; updateManualEntry("goldItems", updated); }} style={{ ...S.input, ...S.numInput, padding: "4px 6px", fontSize: 12, width: 50 }} /></td>
+                          <td style={S.td}><input type="number" placeholder="0" value={item.value || ""} onChange={e => { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], value: e.target.value }; updateManualEntry("goldItems", updated); }} style={{ ...S.input, ...S.numInput, padding: "4px 6px", fontSize: 12, width: 80 }} /></td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                  <button style={{ ...S.greenBtn, fontSize: 12, padding: "6px 12px" }}>+ Add Row</button>
+                  <button onClick={() => { const updated = [...currentYearData.manualEntries.goldItems, { name: "", weight: 0, purity: 100, value: "" }]; updateManualEntry("goldItems", updated); }} style={{ ...S.greenBtn, fontSize: 12, padding: "6px 12px" }}>+ Add Gold Item</button>
                 </SectionCard>
 
                 <SectionCard title="Debts Owed to You" color="#2E7D32">
@@ -1983,7 +2001,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                       ))}
                     </tbody>
                   </table>
-                  <button style={{ ...S.greenBtn, fontSize: 12, padding: "6px 12px" }}>+ Add Row</button>
+                  <button onClick={() => { const updated = [...currentYearData.manualEntries.debtsOwed, { person: "", amount: "", expectedDate: "" }]; updateManualEntry("debtsOwed", updated); }} style={{ ...S.greenBtn, fontSize: 12, padding: "6px 12px" }}>+ Add Debt</button>
                 </SectionCard>
 
                 <SectionCard title="Business Inventory" color="#6D4C41">
@@ -2009,7 +2027,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                       ))}
                     </tbody>
                   </table>
-                  <button style={{ ...S.greenBtn, fontSize: 12, padding: "6px 12px" }}>+ Add Row</button>
+                  <button onClick={() => { const updated = [...currentYearData.manualEntries.otherAssets, { description: "", value: "" }]; updateManualEntry("otherAssets", updated); }} style={{ ...S.greenBtn, fontSize: 12, padding: "6px 12px" }}>+ Add Asset</button>
                 </SectionCard>
               </div>
 
@@ -2068,16 +2086,18 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                   </div>
 
                   <div style={{ fontSize: 11, color: "#666", marginBottom: 12, paddingBottom: 12, borderBottom: "1px solid #ddd" }}>
+                    {(() => { const nisabValue = (currentYearData.goldPrice || 0) * (madhabRules.goldNisabGrams || 85); return (<>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span>Nisab Threshold</span>
-                      <span style={{ fontWeight: 600 }}>$5,256</span>
+                      <span>Nisab ({madhabRules.goldNisabGrams || 85}g gold)</span>
+                      <span style={{ fontWeight: 600 }}>{nisabValue > 0 ? fmt(nisabValue) : "Set gold price"}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
                       <span>Status</span>
-                      <span style={{ fontWeight: 600, color: netZakatable >= 5256 ? "#2E7D32" : "#999" }}>
-                        {netZakatable >= 5256 ? "✓ Above Nisab" : "Below Nisab"}
+                      <span style={{ fontWeight: 600, color: nisabValue > 0 && netZakatable >= nisabValue ? "#2E7D32" : "#999" }}>
+                        {nisabValue <= 0 ? "Set gold price first" : netZakatable >= nisabValue ? "✓ Above Nisab" : "Below Nisab"}
                       </span>
                     </div>
+                    </>); })()}
                   </div>
 
                   <div style={{ background: "linear-gradient(135deg, #1B5E20, #2E7D32)", padding: "12px", borderRadius: 8, color: "#fff", textAlign: "center" }}>
@@ -2214,16 +2234,16 @@ export default function ZakatukumPreview({ initialAuthMode }) {
               <SectionCard title={t("livestock")} color="#8B4513">
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
                   <div>
-                    <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>{t("candles")}</label>
-                    <input type="number" value={currentYearData.livestock.camels} onChange={e => updateNestedField("livestock", "camels", parseFloat(e.target.value) || 0)} style={{ ...S.input, marginTop: 6 }} />
+                    <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>{t("camels")}</label>
+                    <input type="number" value={currentYearData.livestock.camels || ""} onChange={e => updateNestedField("livestock", "camels", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)} style={{ ...S.input, marginTop: 6 }} placeholder="0" />
                   </div>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>{t("cattle")}</label>
-                    <input type="number" value={currentYearData.livestock.cattle} onChange={e => updateNestedField("livestock", "cattle", parseFloat(e.target.value) || 0)} style={{ ...S.input, marginTop: 6 }} />
+                    <input type="number" value={currentYearData.livestock.cattle || ""} onChange={e => updateNestedField("livestock", "cattle", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)} style={{ ...S.input, marginTop: 6 }} placeholder="0" />
                   </div>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>{t("sheep")}</label>
-                    <input type="number" value={currentYearData.livestock.sheep} onChange={e => updateNestedField("livestock", "sheep", parseFloat(e.target.value) || 0)} style={{ ...S.input, marginTop: 6 }} />
+                    <input type="number" value={currentYearData.livestock.sheep || ""} onChange={e => updateNestedField("livestock", "sheep", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)} style={{ ...S.input, marginTop: 6 }} placeholder="0" />
                   </div>
                 </div>
                 <div style={{ background: "#f5f5f5", padding: "16px 18px", borderRadius: 8, fontSize: 13, color: "#555" }}>
@@ -2314,7 +2334,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>{t("weight")}</label>
                     <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-                      <input type="number" value={currentYearData.agriculture.weight} onChange={e => updateNestedField("agriculture", "weight", parseFloat(e.target.value) || 0)} style={{ ...S.input, flex: 1 }} />
+                      <input type="number" value={currentYearData.agriculture.weight || ""} onChange={e => updateNestedField("agriculture", "weight", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)} style={{ ...S.input, flex: 1 }} placeholder="0" />
                       <select value={currentYearData.agriculture.unit} onChange={e => updateNestedField("agriculture", "unit", e.target.value)} style={{ ...S.input, flex: 0.5 }}>
                         <option>kg</option>
                         <option>tons</option>
@@ -2324,7 +2344,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                   </div>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Market {t("value")}</label>
-                    <input type="number" value={currentYearData.agriculture.marketValue} onChange={e => updateNestedField("agriculture", "marketValue", parseFloat(e.target.value) || 0)} style={{ ...S.input, marginTop: 6 }} />
+                    <input type="number" value={currentYearData.agriculture.marketValue || ""} onChange={e => updateNestedField("agriculture", "marketValue", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)} style={{ ...S.input, marginTop: 6 }} placeholder="0" />
                   </div>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Type</label>
@@ -2358,12 +2378,12 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Minerals & Extracted Resources ({t("value")})</label>
-                    <input type="number" value={currentYearData.mining.minerals} onChange={e => updateNestedField("mining", "minerals", parseFloat(e.target.value) || 0)} placeholder="Minerals value" style={{ ...S.input, marginTop: 6 }} />
+                    <input type="number" value={currentYearData.mining.minerals || ""} onChange={e => updateNestedField("mining", "minerals", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)} placeholder="0" style={{ ...S.input, marginTop: 6 }} />
                     <p style={{ margin: "4px 0 0", fontSize: 11, color: "#666" }}>Zakat: {fmt((currentYearData.mining.minerals || 0) * 0.025)} (2.5%)</p>
                   </div>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Rikaz (Buried Treasure / Found Wealth) - {t("value")}</label>
-                    <input type="number" value={currentYearData.mining.rikaz} onChange={e => updateNestedField("mining", "rikaz", parseFloat(e.target.value) || 0)} placeholder="Rikaz value" style={{ ...S.input, marginTop: 6 }} />
+                    <input type="number" value={currentYearData.mining.rikaz || ""} onChange={e => updateNestedField("mining", "rikaz", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)} placeholder="0" style={{ ...S.input, marginTop: 6 }} />
                     <p style={{ margin: "4px 0 0", fontSize: 11, color: "#666" }}>Zakat: {fmt((currentYearData.mining.rikaz || 0) * 0.2)} (20% - Khums)</p>
                   </div>
                 </div>
@@ -2384,15 +2404,15 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 16 }}>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Monthly Income</label>
-                    <input type="number" value={currentYearData.rental.monthlyIncome} onChange={e => updateNestedField("rental", "monthlyIncome", parseFloat(e.target.value) || 0)} style={{ ...S.input, marginTop: 6 }} />
+                    <input type="number" value={currentYearData.rental.monthlyIncome || ""} onChange={e => updateNestedField("rental", "monthlyIncome", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)} placeholder="0" style={{ ...S.input, marginTop: 6 }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Monthly Expenses</label>
-                    <input type="number" value={currentYearData.rental.expenses} onChange={e => updateNestedField("rental", "expenses", parseFloat(e.target.value) || 0)} style={{ ...S.input, marginTop: 6 }} />
+                    <input type="number" value={currentYearData.rental.expenses || ""} onChange={e => updateNestedField("rental", "expenses", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)} placeholder="0" style={{ ...S.input, marginTop: 6 }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Months (Period)</label>
-                    <input type="number" value={currentYearData.rental.months} onChange={e => updateNestedField("rental", "months", parseFloat(e.target.value) || 12)} style={{ ...S.input, marginTop: 6 }} />
+                    <input type="number" value={currentYearData.rental.months || ""} onChange={e => updateNestedField("rental", "months", e.target.value === "" ? 12 : parseFloat(e.target.value) || 12)} placeholder="12" style={{ ...S.input, marginTop: 6 }} />
                   </div>
                 </div>
                 <div style={{ background: "#f5f5f5", padding: "12px 14px", borderRadius: 8, fontSize: 13 }}>
