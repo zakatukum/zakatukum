@@ -361,6 +361,12 @@ const TRANSLATIONS = {
   "payment_history": { en: "Payment History", ar: "سجل الدفعات", ur: "ادائیگی کی تاریخ", tr: "Ödeme Geçmişi", ms: "Sejarah Pembayaran", id: "Riwayat Pembayaran", fr: "Historique des paiements", es: "Historial de pagos", de: "Zahlungshistorie", bn: "পেমেন্টের ইতিহাস" },
   "fee_warning": { en: "Important: Payment Processing Fees", ar: "مهم: رسوم معالجة الدفع", ur: "اہم: ادائیگی پروسیسنگ فیس", tr: "Önemli: Ödeme İşlem Ücretleri", ms: "Penting: Yuran Pemprosesan Pembayaran", id: "Penting: Biaya Pemrosesan Pembayaran", fr: "Important: Frais de traitement des paiements", es: "Importante: Tarifas de procesamiento de pagos", de: "Wichtig: Zahlungsbearbeitungsgebühren", bn: "গুরুত্বপূর্ণ: পেমেন্ট প্রসেসিং ফি" },
   "admin_dashboard": { en: "Admin Dashboard", ar: "لوحة الإدارة", ur: "ایڈمن ڈیش بورڈ", tr: "Yönetici Paneli", ms: "Panel Pentadbir", id: "Dasbor Admin", fr: "Tableau de bord admin", es: "Panel de administración", de: "Admin-Dashboard", bn: "অ্যাডমিন ড্যাশবোর্ড" },
+  "zakat_summary": { en: "Zakat Summary", ar: "ملخص الزكاة", ur: "زکات کا خلاصہ", tr: "Zekat Özeti", ms: "Ringkasan Zakat", id: "Ringkasan Zakat", fr: "Résumé de la Zakat", es: "Resumen del Zakat", de: "Zakat-Zusammenfassung", bn: "যাকাত সারাংশ" },
+  "total_zakat_due": { en: "Total Zakat Due", ar: "إجمالي الزكاة المستحقة", ur: "کل واجب الادا زکات", tr: "Toplam Zekat Borcu", ms: "Jumlah Zakat Perlu Dibayar", id: "Total Zakat yang Harus Dibayar", fr: "Total de la Zakat Due", es: "Total del Zakat Debido", de: "Gesamte fällige Zakat", bn: "মোট প্রদেয় যাকাত" },
+  "monetary_zakat": { en: "Monetary Zakat", ar: "الزكاة النقدية", ur: "نقد زکات", tr: "Parasal Zekat", ms: "Zakat Wang", id: "Zakat Uang", fr: "Zakat Monétaire", es: "Zakat Monetario", de: "Monetäre Zakat", bn: "আর্থিক যাকাত" },
+  "in_kind_obligations": { en: "In-Kind Obligations", ar: "الالتزامات العينية", ur: "عینی ذمہ داریاں", tr: "Ayni Yükümlülükler", ms: "Kewajipan Barangan", id: "Kewajiban Barang", fr: "Obligations en nature", es: "Obligaciones en especie", de: "Sachleistungspflichten", bn: "বস্তুগত বাধ্যবাধকতা" },
+  "payment_progress": { en: "Payment Progress", ar: "تقدم الدفع", ur: "ادائیگی کی پیش رفت", tr: "Ödeme İlerlemesi", ms: "Kemajuan Pembayaran", id: "Kemajuan Pembayaran", fr: "Progrès de paiement", es: "Progreso de pago", de: "Zahlungsfortschritt", bn: "পেমেন্ট অগ্রগতি" },
+  "no_zakat_due": { en: "No zakat due yet. Enter your assets in the calculator and other tabs to see your breakdown.", ar: "لا زكاة مستحقة بعد. أدخل أصولك في الحاسبة والأقسام الأخرى.", ur: "ابھی کوئی زکات واجب نہیں۔ اپنے اثاثے کیلکولیٹر اور دیگر ٹیبز میں درج کریں۔", tr: "Henüz zekat borcu yok. Varlıklarınızı hesap makinesine girin.", ms: "Belum ada zakat perlu dibayar. Masukkan aset anda.", id: "Belum ada zakat yang harus dibayar. Masukkan aset Anda.", fr: "Pas encore de zakat due. Entrez vos actifs.", es: "Aún no hay zakat debido. Ingrese sus activos.", de: "Noch keine Zakat fällig. Geben Sie Ihre Vermögenswerte ein.", bn: "এখনও কোনো যাকাত প্রদেয় নেই। আপনার সম্পদ প্রবেশ করান।" },
   "feedback": { en: "Feedback", ar: "ملاحظات", ur: "رائے", tr: "Geri Bildirim", ms: "Maklum Balas", id: "Umpan Balik", fr: "Commentaires", es: "Comentarios", de: "Feedback", bn: "মতামত" },
   "feedback_submitted": { en: "Thank you! Your feedback has been submitted.", ar: "شكراً! تم إرسال ملاحظاتك.", ur: "شکریہ! آپ کی رائے بھیج دی گئی۔", tr: "Teşekkürler! Geri bildiriminiz gönderildi.", ms: "Terima kasih! Maklum balas anda telah dihantar.", id: "Terima kasih! Umpan balik Anda telah dikirim.", fr: "Merci ! Vos commentaires ont été soumis.", es: "¡Gracias! Sus comentarios han sido enviados.", de: "Danke! Ihr Feedback wurde gesendet.", bn: "ধন্যবাদ! আপনার মতামত জমা দেওয়া হয়েছে।" },
 };
@@ -1104,9 +1110,9 @@ export default function ZakatukumPreview({ initialAuthMode }) {
   };
 
   const totalWealth = currentYearData.cash + currentYearData.inv + currentYearData.gold;
-  const zakatDue = currentYearData.due || 0;
+  // Use live computed zakat if no stored value (or if stored value is 0)
+  const zakatDueStored = currentYearData.due || 0;
   const totalPaid = currentYearData.paid || 0;
-  const remaining = zakatDue - totalPaid;
   const hijriToday = getHijriString(new Date());
 
   // Build dashboard data from all years
@@ -1147,14 +1153,43 @@ export default function ZakatukumPreview({ initialAuthMode }) {
     return 0;
   };
 
+  // Livestock zakat uses classical nisab tables — returns { sheep, cattle, camels, total } with descriptive breakdowns
   const calculateLivestockZakat = () => {
-    let total = 0;
-    const { sheep, cattle, camels } = currentYearData.livestock;
-    // Simplified calculation: show counts as values for display
-    total += sheep * 0.025; // Placeholder for sheep calculation
-    total += cattle * 0.025;
-    total += camels * 0.025;
-    return total;
+    const { sheep = 0, cattle = 0, camels = 0 } = currentYearData.livestock;
+    const result = { sheepDue: "", cattleDue: "", camelsDue: "", sheepCount: 0, cattleCount: 0, camelsCount: 0 };
+
+    // Sheep/Goats nisab table
+    if (sheep >= 400) { result.sheepCount = Math.floor(sheep / 100); result.sheepDue = `${result.sheepCount} sheep (1 per 100)`; }
+    else if (sheep >= 201) { result.sheepCount = 3; result.sheepDue = "3 sheep"; }
+    else if (sheep >= 121) { result.sheepCount = 2; result.sheepDue = "2 sheep"; }
+    else if (sheep >= 40) { result.sheepCount = 1; result.sheepDue = "1 sheep"; }
+    else { result.sheepDue = "None (below 40 nisab)"; }
+
+    // Cattle nisab table
+    if (cattle >= 60) {
+      const thirties = Math.floor(cattle / 30);
+      const forties = Math.floor(cattle / 40);
+      result.cattleCount = thirties + forties;
+      result.cattleDue = `${thirties} calf (1yr) + ${forties} calf (2yr) — proportional`;
+    } else if (cattle >= 40) { result.cattleCount = 1; result.cattleDue = "1 calf (2 year old)"; }
+    else if (cattle >= 30) { result.cattleCount = 1; result.cattleDue = "1 calf (1 year old)"; }
+    else { result.cattleDue = "None (below 30 nisab)"; }
+
+    // Camels nisab table
+    if (camels >= 91) { result.camelsCount = 2; result.camelsDue = "2 camels (3 yr old)"; }
+    else if (camels >= 76) { result.camelsCount = 2; result.camelsDue = "2 camels (2 yr old)"; }
+    else if (camels >= 61) { result.camelsCount = 1; result.camelsDue = "1 camel (4 yr old)"; }
+    else if (camels >= 46) { result.camelsCount = 1; result.camelsDue = "1 camel (3 yr old)"; }
+    else if (camels >= 36) { result.camelsCount = 1; result.camelsDue = "1 camel (2 yr old)"; }
+    else if (camels >= 25) { result.camelsCount = 1; result.camelsDue = "1 camel (1 yr old)"; }
+    else if (camels >= 20) { result.camelsDue = "4 sheep"; result.sheepCount += 4; }
+    else if (camels >= 15) { result.camelsDue = "3 sheep"; result.sheepCount += 3; }
+    else if (camels >= 10) { result.camelsDue = "2 sheep"; result.sheepCount += 2; }
+    else if (camels >= 5) { result.camelsDue = "1 sheep"; result.sheepCount += 1; }
+    else { result.camelsDue = "None (below 5 nisab)"; }
+
+    result.hasAny = (sheep >= 40 || cattle >= 30 || camels >= 5);
+    return result;
   };
 
   const calculateAgriculturalZakat = () => {
@@ -1215,6 +1250,25 @@ export default function ZakatukumPreview({ initialAuthMode }) {
   // Khums calculation for Ja'fari/Shia
   const khumsApplicable = madhabRules.hasKhums || false;
   const khumsDue = khumsApplicable ? Math.max(0, netZakatable) * (madhabRules.khumsRate || 0.2) : 0;
+
+  // ─── Zakat Summary Breakdown (used by dashboard + summary tab) ───
+  const livestockResult = calculateLivestockZakat();
+  const agZakat = calculateAgriculturalZakat();
+  const miningZakat = calculateMiningZakat();
+  const rentalZakat = calculateRentalZakat();
+
+  const zakatBreakdown = [
+    { category: "Wealth (Cash, Gold, Investments)", amount: Math.max(0, netZakatable) * 0.025, icon: "💰", color: "#1B5E20" },
+    { category: "Agricultural Produce", amount: agZakat, icon: "🌾", color: "#558B2F" },
+    { category: "Mining & Rikaz", amount: miningZakat, icon: "⛏️", color: "#424242" },
+    { category: "Rental Income", amount: rentalZakat, icon: "🏠", color: "#0288D1" },
+  ].filter(d => d.amount > 0);
+
+  // Total monetary zakat due (wealth + agriculture + mining + rental; livestock is in-kind)
+  const totalMonetaryZakat = zakatBreakdown.reduce((s, d) => s + d.amount, 0);
+  // Use live computed value — falls back to stored DB value only if computed is 0 AND stored exists
+  const zakatDue = totalMonetaryZakat > 0 ? totalMonetaryZakat : zakatDueStored;
+  const remaining = zakatDue - totalPaid;
 
   const wealthBreakdown = [
     { name: "Banking", value: calculateCategoryBalance("banking") },
@@ -1577,6 +1631,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
             { id: "agriculture", icon: "🌾", label: t("agriculture") },
             { id: "mining", icon: "⛏️", label: t("mining") },
             { id: "rental", icon: "🏠", label: t("rental") },
+            { id: "summary", icon: "📊", label: t("zakat_summary") },
             { id: "report", icon: "📄", label: t("report") },
             { id: "feedback", icon: "💬", label: t("feedback") },
             { id: "settings", icon: "⚙️", label: t("profile_settings") },
@@ -2211,6 +2266,37 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                   <p style={{ margin: "10px 0 0", fontSize: 11, color: "#888" }}>Below minimum nisab = no zakat due. Livestock must be free-grazing (sa'imah) for the majority of the year.</p>
                 </div>
               </SectionCard>
+
+              {/* Livestock Zakat Result */}
+              <SectionCard title="Your Livestock Zakat" color="#1B5E20">
+                {livestockResult.hasAny ? (
+                  <div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
+                      {[
+                        { label: t("sheep"), count: currentYearData.livestock.sheep, due: livestockResult.sheepDue, color: "#8B4513", nisab: 40 },
+                        { label: t("cattle"), count: currentYearData.livestock.cattle, due: livestockResult.cattleDue, color: "#5D4037", nisab: 30 },
+                        { label: t("camels"), count: currentYearData.livestock.camels, due: livestockResult.camelsDue, color: "#795548", nisab: 5 },
+                      ].map((item, i) => (
+                        <div key={i} style={{ padding: "14px", borderRadius: 10, background: item.count >= item.nisab ? "#e8f5e9" : "#f5f5f5", border: `1px solid ${item.count >= item.nisab ? "#c8e6c9" : "#e0e0e0"}` }}>
+                          <p style={{ margin: "0 0 4px", fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase" }}>{item.label} ({item.count})</p>
+                          <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: item.count >= item.nisab ? "#1B5E20" : "#999" }}>{item.due}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ background: "#e8f5e9", padding: "14px 16px", borderRadius: 8, border: "1px solid #c8e6c9" }}>
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#1B5E20" }}>Livestock zakat is paid in-kind (animals), not in cash. Consult your local scholar for exact animal specifications.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "20px 0" }}>
+                    <p style={{ margin: 0, fontSize: 14, color: "#888" }}>
+                      {(currentYearData.livestock.sheep > 0 || currentYearData.livestock.cattle > 0 || currentYearData.livestock.camels > 0)
+                        ? "Your livestock counts are below the nisab thresholds. No zakat is due."
+                        : "Enter your livestock counts above to calculate zakat."}
+                    </p>
+                  </div>
+                )}
+              </SectionCard>
             </div>
           )}
 
@@ -2325,6 +2411,133 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                   <p style={{ margin: "8px 0 0", fontSize: 11, color: "#666" }}>Note: Zakat applies to net rental savings. Property itself is not zakatable unless held for sale.</p>
                 </div>
               </SectionCard>
+            </div>
+          )}
+
+          {view === "summary" && (
+            <div style={{direction: lang === "ar" || lang === "ur" ? "rtl" : "ltr"}}>
+              <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#1B5E20" }}>{t("zakat_summary")}</h2>
+              <p style={{ margin: "0 0 20px", fontSize: 13, color: "#999" }}>{formatYearDisplay(selectedYear)} — {currentMadhab?.name || "Hanafi"}</p>
+
+              {(zakatBreakdown.length > 0 || livestockResult.hasAny) ? (
+                <>
+                  {/* Grand Total Card */}
+                  <div style={{ background: "linear-gradient(135deg, #1B5E20 0%, #2E7D32 50%, #388E3C 100%)", borderRadius: 16, padding: "28px 24px", marginBottom: 20, color: "white", boxShadow: "0 4px 20px rgba(27,94,32,0.25)" }}>
+                    <p style={{ margin: "0 0 4px", fontSize: 12, fontWeight: 600, textTransform: "uppercase", opacity: 0.85 }}>{t("total_zakat_due")}</p>
+                    <p style={{ margin: "0 0 12px", fontSize: 36, fontWeight: 800 }}>{fmtFull(totalMonetaryZakat)}</p>
+                    <div style={{ display: "flex", gap: 20, fontSize: 13, opacity: 0.9 }}>
+                      <span>Paid: {fmtFull(totalPaid)}</span>
+                      <span>Remaining: {fmtFull(Math.max(0, totalMonetaryZakat - totalPaid))}</span>
+                    </div>
+                    {totalPaid > 0 && (
+                      <div style={{ marginTop: 12, background: "rgba(255,255,255,0.2)", borderRadius: 8, height: 8, overflow: "hidden" }}>
+                        <div style={{ width: `${Math.min(100, (totalPaid / totalMonetaryZakat) * 100)}%`, height: "100%", background: "rgba(255,255,255,0.7)", borderRadius: 8, transition: "width 0.5s ease" }} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Monetary Zakat Breakdown */}
+                  {zakatBreakdown.length > 0 && (
+                    <SectionCard title={t("monetary_zakat")} color="#1B5E20">
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        {zakatBreakdown.map((item, i) => (
+                          <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderRadius: 10, background: "#f9fdf9", border: "1px solid #e8f5e9" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                              <span style={{ fontSize: 22 }}>{item.icon}</span>
+                              <div>
+                                <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#333" }}>{item.category}</p>
+                                <p style={{ margin: "2px 0 0", fontSize: 11, color: "#888" }}>
+                                  {item.category.includes("Wealth") && "2.5% of net zakatable wealth"}
+                                  {item.category.includes("Agricultural") && (currentYearData.agriculture.irrigated ? "5% (irrigated)" : "10% (rain-fed)")}
+                                  {item.category.includes("Mining") && "2.5% minerals + 20% rikaz"}
+                                  {item.category.includes("Rental") && "2.5% of net rental income"}
+                                </p>
+                              </div>
+                            </div>
+                            <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: item.color }}>{fmtFull(item.amount)}</p>
+                          </div>
+                        ))}
+                        {/* Total row */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderRadius: 10, background: "#e8f5e9", borderTop: "2px solid #1B5E20" }}>
+                          <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#1B5E20" }}>{t("total_zakat_due")}</p>
+                          <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#1B5E20" }}>{fmtFull(totalMonetaryZakat)}</p>
+                        </div>
+                      </div>
+                    </SectionCard>
+                  )}
+
+                  {/* Livestock (In-Kind) Section */}
+                  {livestockResult.hasAny && (
+                    <SectionCard title={t("in_kind_obligations")} color="#795548">
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
+                        {[
+                          { label: t("sheep"), count: currentYearData.livestock.sheep, due: livestockResult.sheepDue, icon: "🐑", nisab: 40 },
+                          { label: t("cattle"), count: currentYearData.livestock.cattle, due: livestockResult.cattleDue, icon: "🐄", nisab: 30 },
+                          { label: t("camels"), count: currentYearData.livestock.camels, due: livestockResult.camelsDue, icon: "🐪", nisab: 5 },
+                        ].filter(a => a.count >= a.nisab).map((item, i) => (
+                          <div key={i} style={{ padding: "14px", borderRadius: 10, background: "#efebe9", border: "1px solid #d7ccc8" }}>
+                            <p style={{ margin: "0 0 4px", fontSize: 20 }}>{item.icon}</p>
+                            <p style={{ margin: "0 0 4px", fontSize: 12, fontWeight: 700, color: "#5D4037", textTransform: "uppercase" }}>{item.label} ({item.count})</p>
+                            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#4E342E" }}>{item.due}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <p style={{ margin: 0, fontSize: 12, color: "#888", fontStyle: "italic" }}>Livestock zakat is paid in-kind (animals), not in cash. Consult a scholar for exact specifications.</p>
+                    </SectionCard>
+                  )}
+
+                  {/* Payment Progress */}
+                  <SectionCard title={t("payment_progress")} color="#0288D1">
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
+                      <div style={{ textAlign: "center", padding: "16px 10px", borderRadius: 10, background: "#e8f5e9" }}>
+                        <p style={{ margin: "0 0 4px", fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase" }}>Total Due</p>
+                        <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#1B5E20" }}>{fmt(totalMonetaryZakat)}</p>
+                      </div>
+                      <div style={{ textAlign: "center", padding: "16px 10px", borderRadius: 10, background: "#e3f2fd" }}>
+                        <p style={{ margin: "0 0 4px", fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase" }}>Paid</p>
+                        <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#0288D1" }}>{fmt(totalPaid)}</p>
+                      </div>
+                      <div style={{ textAlign: "center", padding: "16px 10px", borderRadius: 10, background: remaining > 0 ? "#fff3e0" : "#e8f5e9" }}>
+                        <p style={{ margin: "0 0 4px", fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase" }}>Remaining</p>
+                        <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: remaining > 0 ? "#E65100" : "#1B5E20" }}>{fmt(Math.max(0, remaining))}</p>
+                      </div>
+                    </div>
+                    {totalMonetaryZakat > 0 && (
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                          <span style={{ fontSize: 12, color: "#888" }}>{Math.min(100, Math.round((totalPaid / totalMonetaryZakat) * 100))}% complete</span>
+                        </div>
+                        <div style={{ background: "#e0e0e0", borderRadius: 8, height: 10, overflow: "hidden" }}>
+                          <div style={{ width: `${Math.min(100, (totalPaid / totalMonetaryZakat) * 100)}%`, height: "100%", background: remaining <= 0 ? "#1B5E20" : "#0288D1", borderRadius: 8, transition: "width 0.5s ease" }} />
+                        </div>
+                      </div>
+                    )}
+                    {remaining <= 0 && totalMonetaryZakat > 0 && (
+                      <div style={{ marginTop: 16, background: "#e8f5e9", padding: "14px 16px", borderRadius: 10, textAlign: "center", border: "1px solid #c8e6c9" }}>
+                        <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#1B5E20" }}>Alhamdulillah! Your monetary zakat is fully paid.</p>
+                      </div>
+                    )}
+                    {totalPaid > 0 && remaining > 0 && (
+                      <button onClick={() => setView("pay")} style={{ ...S.btnPrimary, marginTop: 16, width: "100%" }}>
+                        Pay Remaining {fmtFull(remaining)}
+                      </button>
+                    )}
+                    {totalPaid === 0 && totalMonetaryZakat > 0 && (
+                      <button onClick={() => setView("pay")} style={{ ...S.btnPrimary, marginTop: 16, width: "100%" }}>
+                        Pay Your Zakat — {fmtFull(totalMonetaryZakat)}
+                      </button>
+                    )}
+                  </SectionCard>
+                </>
+              ) : (
+                <div style={{ textAlign: "center", padding: "60px 20px" }}>
+                  <p style={{ fontSize: 48, margin: "0 0 12px" }}>📊</p>
+                  <p style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 600, color: "#555" }}>{t("no_zakat_due")}</p>
+                  <button onClick={() => setView("calculator")} style={{ ...S.btnPrimary, marginTop: 16 }}>
+                    {t("calculator")}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

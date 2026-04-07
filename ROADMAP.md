@@ -103,6 +103,14 @@
 - [x] **Feedback system** — `/api/feedback` route (POST/GET), `feedback` table in Supabase with RLS policies, 7 categories, star rating, user feedback history, admin feedback dashboard
 - [x] **DESIGN.md** — comprehensive design system based on awesome-design-md format (Stripe fintech pattern adapted for Islamic green branding)
 
+### Bug Fixes (April 7, 2026) — From Tester Feedback
+- [x] **Fixed livestock zakat calculation** — was placeholder `count * 0.025`, replaced with proper Islamic nisab tables (sheep 40+, cattle 30+, camels 5+ with graduated tiers)
+- [x] **Fixed dashboard zakat due** — was reading stored DB `due` field (always 0 for new users), now computes live from all categories in real-time via `totalMonetaryZakat`
+- [x] **Added `zakatBreakdown` array** — per-category breakdown (wealth, agriculture, mining, rental) with live amounts, icons, colors
+- [x] **Added livestock result display** — livestock tab now shows per-animal nisab results with green/gray styling based on whether threshold is met
+- [x] **Added Zakat Summary tab** — new "📊 Zakat Summary" nav tab showing: grand total card with gradient, per-category monetary breakdown, in-kind livestock obligations, payment progress bar with paid/remaining/percentage
+- [x] **Fixed "candles" typo** — was showing "candles" instead of "camels" in livestock tab
+
 ### Database Tables
 - `profiles` — id, email, name, country, currency, madhab, lang, is_admin, reminders, created_at, updated_at
 - `zakat_years` — id, user_id, hijri_year, investments (JSONB v2 data), created_at, updated_at
