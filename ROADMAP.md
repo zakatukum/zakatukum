@@ -232,6 +232,20 @@
 4. **White-Label for Mosques** — Custom domain + branding for Islamic centers
 5. **Sadaqah Model** — Donation button for sustainability
 
+### Attracting Privacy-First / Spreadsheet Users
+> **User feedback (April 2026):** "I prefer doing it myself rather than entering financial info on some website. I just have a spreadsheet where I sum up amounts and then divide by 40."
+
+This is a significant segment — people who understand zakat but don't trust entering financial data online. Strategy: meet them where they are (spreadsheets) and earn trust gradually.
+
+- [ ] **Guest calculator (no account required)** — let anyone calculate zakat without signing up or storing data. All computation client-side, nothing saved. Removes the biggest friction point.
+- [ ] **Downloadable Excel template** — branded `.xlsx` with pre-built formulas for all asset categories, nisab lookup, madhab-specific rules, and Hijri year tracking. Works fully offline. "Zakatukum in a spreadsheet."
+- [ ] **CSV/Excel import** — let users upload their existing spreadsheet and auto-map columns to zakat categories. They keep their workflow, we add the intelligence (nisab checks, madhab rules, gold prices).
+- [ ] **Privacy-first messaging on landing page** — clearly state: "Your data never leaves your browser unless you create an account. Zero tracking. No ads." Build trust before asking for signup.
+- [ ] **Local-only mode** — full calculator that stores data in browser localStorage only (no Supabase). For users who want the app features but refuse cloud storage.
+- [ ] **Export to Excel** — let logged-in users export their full zakat calculation to `.xlsx` so they can verify everything in their own spreadsheet. Bridges the trust gap.
+- [ ] **Open-source calculator logic** — publish the zakat calculation formulas on GitHub as a standalone library. Transparency builds trust with technical users.
+- [ ] **"Verify our math" section** — show the exact formula used for each asset type with Quranic/hadith references. Let skeptical users cross-check against their own calculations.
+
 ### Feature Expansions
 - [ ] Advanced reporting (PDF, Excel export)
 - [ ] Gold price alerts (real-time market data)
