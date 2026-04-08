@@ -4,6 +4,48 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from "recharts";
 import { getSupabase } from "@/lib/supabase";
 
+// ─── NumInput: robust number input that doesn't fight the user ───
+// Stores a local string while typing, commits parsed number on blur/Enter.
+// This avoids: dot-eating, zero-display bugs, can't-clear-field issues.
+function NumInput({ value, onChange, integer, placeholder, style, min }) {
+  const [localVal, setLocalVal] = useState(value != null && value !== 0 ? String(value) : "");
+  const [focused, setFocused] = useState(false);
+  // Sync from parent when not focused (e.g., data loaded from DB)
+  useEffect(() => {
+    if (!focused) {
+      setLocalVal(value != null && value !== 0 ? String(value) : "");
+    }
+  }, [value, focused]);
+  const commit = (str) => {
+    const parsed = integer ? parseInt(str) : parseFloat(str);
+    onChange(isNaN(parsed) ? 0 : parsed);
+  };
+  return (
+    <input
+      type="text"
+      inputMode={integer ? "numeric" : "decimal"}
+      pattern={integer ? "[0-9]*" : "[0-9]*\\.?[0-9]*"}
+      value={focused ? localVal : (value != null && value !== 0 ? String(value) : "")}
+      placeholder={placeholder || "0"}
+      style={style}
+      min={min}
+      onFocus={() => { setFocused(true); setLocalVal(value != null && value !== 0 ? String(value) : ""); }}
+      onBlur={() => { commit(localVal); setFocused(false); }}
+      onChange={e => {
+        const v = e.target.value;
+        // Allow empty, digits, single dot for decimals
+        if (v === "" || (integer ? /^\d*$/.test(v) : /^\d*\.?\d*$/.test(v))) {
+          setLocalVal(v);
+          // Live-update parent for responsive calculations
+          const parsed = integer ? parseInt(v) : parseFloat(v);
+          if (!isNaN(parsed)) onChange(parsed);
+        }
+      }}
+      onKeyDown={e => { if (e.key === "Enter") { commit(localVal); e.target.blur(); } }}
+    />
+  );
+}
+
 // ─── Hijri Date Utilities ───
 const HIJRI_EPOCH = 1948439.5;
 function gregorianToJDN(y, m, d) { if (m <= 2) { y--; m += 12; } const A = Math.floor(y / 100); const B = 2 - A + Math.floor(A / 4); return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + B - 1524.5; }
@@ -1802,7 +1844,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                 <div style={{ ...S.card, padding: "14px 18px" }}>
                   <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Gold Price ({currencyInfo.symbol}/gram)</label>
                   <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-                    <input type="number" value={currentYearData.goldPrice || ""} onChange={e => updateCurrentYear("goldPrice", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)} placeholder="0" style={{ ...S.input, ...S.numInput, flex: 1, fontSize: 20, fontWeight: 700, color: "#1B5E20", background: "#FFF8E1" }} />
+                    <NumInput value={currentYearData.goldPrice} onChange={v => updateCurrentYear("goldPrice", v)} style={{ ...S.input, ...S.numInput, flex: 1, fontSize: 20, fontWeight: 700, color: "#1B5E20", background: "#FFF8E1" }} />
                     <button onClick={() => fetchGoldPrice()} disabled={goldPriceLoading} style={{ ...S.headerBtn, background: goldPriceLoading ? "#ccc" : "#e8f5e9", color: "#2E7D32", border: "1px solid #C8E6C9", cursor: goldPriceLoading ? "wait" : "pointer", minWidth: 60 }}>{goldPriceLoading ? "..." : "⟳ Live"}</button>
                   </div>
                   {currentYearData.goldPriceSource && <p style={{ margin: "4px 0 0", fontSize: 10, color: "#999" }}>via {currentYearData.goldPriceSource}</p>}
@@ -1978,9 +2020,9 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                       {currentYearData.manualEntries.goldItems.map((item, i) => (
                         <tr key={i} style={i % 2 === 0 ? { background: "#fafafa" } : {}}>
                           <td style={S.td}><input placeholder="Ring, Necklace..." value={item.name} onChange={e => { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], name: e.target.value }; updateManualEntry("goldItems", updated); }} style={{ ...S.input, padding: "4px 6px", fontSize: 12 }} /></td>
-                          <td style={S.td}><input type="number" placeholder="0" value={item.weight || ""} onChange={e => { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], weight: e.target.value === "" ? 0 : parseFloat(e.target.value) || 0 }; updateManualEntry("goldItems", updated); }} style={{ ...S.input, ...S.numInput, padding: "4px 6px", fontSize: 12, width: 70 }} /></td>
-                          <td style={S.td}><input type="number" placeholder="100" value={item.purity || ""} onChange={e => { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], purity: e.target.value === "" ? 100 : parseInt(e.target.value) || 100 }; updateManualEntry("goldItems", updated); }} style={{ ...S.input, ...S.numInput, padding: "4px 6px", fontSize: 12, width: 50 }} /></td>
-                          <td style={S.td}><input type="number" placeholder="0" value={item.value || ""} onChange={e => { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], value: e.target.value }; updateManualEntry("goldItems", updated); }} style={{ ...S.input, ...S.numInput, padding: "4px 6px", fontSize: 12, width: 80 }} /></td>
+                          <td style={S.td}><input type="text" inputMode="decimal" placeholder="0" value={item.weight != null && item.weight !== 0 ? item.weight : ""} onChange={e => { const v = e.target.value; if (v === "" || /^\d*\.?\d*$/.test(v)) { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], weight: v === "" ? 0 : parseFloat(v) || 0 }; updateManualEntry("goldItems", updated); } }} onBlur={e => { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], weight: parseFloat(e.target.value) || 0 }; updateManualEntry("goldItems", updated); }} style={{ ...S.input, ...S.numInput, padding: "4px 6px", fontSize: 12, width: 70 }} /></td>
+                          <td style={S.td}><input type="text" inputMode="numeric" placeholder="100" value={item.purity != null && item.purity !== 100 ? item.purity : ""} onChange={e => { const v = e.target.value; if (v === "" || /^\d*$/.test(v)) { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], purity: v === "" ? 100 : parseInt(v) || 100 }; updateManualEntry("goldItems", updated); } }} style={{ ...S.input, ...S.numInput, padding: "4px 6px", fontSize: 12, width: 50 }} /></td>
+                          <td style={S.td}><input type="text" inputMode="decimal" placeholder="0" value={item.value || ""} onChange={e => { const v = e.target.value; if (v === "" || /^\d*\.?\d*$/.test(v)) { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], value: v }; updateManualEntry("goldItems", updated); } }} style={{ ...S.input, ...S.numInput, padding: "4px 6px", fontSize: 12, width: 80 }} /></td>
                         </tr>
                       ))}
                     </tbody>
@@ -2235,15 +2277,15 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>{t("camels")}</label>
-                    <input type="number" value={currentYearData.livestock.camels || ""} onChange={e => updateNestedField("livestock", "camels", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)} style={{ ...S.input, marginTop: 6 }} placeholder="0" />
+                    <NumInput value={currentYearData.livestock.camels} onChange={v => updateNestedField("livestock", "camels", v)} integer style={{ ...S.input, marginTop: 6 }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>{t("cattle")}</label>
-                    <input type="number" value={currentYearData.livestock.cattle || ""} onChange={e => updateNestedField("livestock", "cattle", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)} style={{ ...S.input, marginTop: 6 }} placeholder="0" />
+                    <NumInput value={currentYearData.livestock.cattle} onChange={v => updateNestedField("livestock", "cattle", v)} integer style={{ ...S.input, marginTop: 6 }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>{t("sheep")}</label>
-                    <input type="number" value={currentYearData.livestock.sheep || ""} onChange={e => updateNestedField("livestock", "sheep", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)} style={{ ...S.input, marginTop: 6 }} placeholder="0" />
+                    <NumInput value={currentYearData.livestock.sheep} onChange={v => updateNestedField("livestock", "sheep", v)} integer style={{ ...S.input, marginTop: 6 }} />
                   </div>
                 </div>
                 <div style={{ background: "#f5f5f5", padding: "16px 18px", borderRadius: 8, fontSize: 13, color: "#555" }}>
@@ -2334,7 +2376,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>{t("weight")}</label>
                     <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-                      <input type="number" value={currentYearData.agriculture.weight || ""} onChange={e => updateNestedField("agriculture", "weight", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)} style={{ ...S.input, flex: 1 }} placeholder="0" />
+                      <NumInput value={currentYearData.agriculture.weight} onChange={v => updateNestedField("agriculture", "weight", v)} style={{ ...S.input, flex: 1 }} />
                       <select value={currentYearData.agriculture.unit} onChange={e => updateNestedField("agriculture", "unit", e.target.value)} style={{ ...S.input, flex: 0.5 }}>
                         <option>kg</option>
                         <option>tons</option>
@@ -2344,7 +2386,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                   </div>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Market {t("value")}</label>
-                    <input type="number" value={currentYearData.agriculture.marketValue || ""} onChange={e => updateNestedField("agriculture", "marketValue", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)} style={{ ...S.input, marginTop: 6 }} placeholder="0" />
+                    <NumInput value={currentYearData.agriculture.marketValue} onChange={v => updateNestedField("agriculture", "marketValue", v)} style={{ ...S.input, marginTop: 6 }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Type</label>
@@ -2378,12 +2420,12 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Minerals & Extracted Resources ({t("value")})</label>
-                    <input type="number" value={currentYearData.mining.minerals || ""} onChange={e => updateNestedField("mining", "minerals", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)} placeholder="0" style={{ ...S.input, marginTop: 6 }} />
+                    <NumInput value={currentYearData.mining.minerals} onChange={v => updateNestedField("mining", "minerals", v)} style={{ ...S.input, marginTop: 6 }} />
                     <p style={{ margin: "4px 0 0", fontSize: 11, color: "#666" }}>Zakat: {fmt((currentYearData.mining.minerals || 0) * 0.025)} (2.5%)</p>
                   </div>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Rikaz (Buried Treasure / Found Wealth) - {t("value")}</label>
-                    <input type="number" value={currentYearData.mining.rikaz || ""} onChange={e => updateNestedField("mining", "rikaz", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)} placeholder="0" style={{ ...S.input, marginTop: 6 }} />
+                    <NumInput value={currentYearData.mining.rikaz} onChange={v => updateNestedField("mining", "rikaz", v)} style={{ ...S.input, marginTop: 6 }} />
                     <p style={{ margin: "4px 0 0", fontSize: 11, color: "#666" }}>Zakat: {fmt((currentYearData.mining.rikaz || 0) * 0.2)} (20% - Khums)</p>
                   </div>
                 </div>
@@ -2404,15 +2446,15 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 16 }}>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Monthly Income</label>
-                    <input type="number" value={currentYearData.rental.monthlyIncome || ""} onChange={e => updateNestedField("rental", "monthlyIncome", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)} placeholder="0" style={{ ...S.input, marginTop: 6 }} />
+                    <NumInput value={currentYearData.rental.monthlyIncome} onChange={v => updateNestedField("rental", "monthlyIncome", v)} style={{ ...S.input, marginTop: 6 }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Monthly Expenses</label>
-                    <input type="number" value={currentYearData.rental.expenses || ""} onChange={e => updateNestedField("rental", "expenses", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)} placeholder="0" style={{ ...S.input, marginTop: 6 }} />
+                    <NumInput value={currentYearData.rental.expenses} onChange={v => updateNestedField("rental", "expenses", v)} style={{ ...S.input, marginTop: 6 }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Months (Period)</label>
-                    <input type="number" value={currentYearData.rental.months || ""} onChange={e => updateNestedField("rental", "months", e.target.value === "" ? 12 : parseFloat(e.target.value) || 12)} placeholder="12" style={{ ...S.input, marginTop: 6 }} />
+                    <NumInput value={currentYearData.rental.months} onChange={v => updateNestedField("rental", "months", v)} integer placeholder="12" style={{ ...S.input, marginTop: 6 }} />
                   </div>
                 </div>
                 <div style={{ background: "#f5f5f5", padding: "12px 14px", borderRadius: 8, fontSize: 13 }}>
