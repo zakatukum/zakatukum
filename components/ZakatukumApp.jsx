@@ -73,6 +73,36 @@ function SectionCard({ title, color, children, action }) {
   );
 }
 
+// ─── Stable Styles Object (defined outside component to prevent re-creation on every render) ───
+const _S = {
+  page: { minHeight: "100vh", background: "#f0f4f0", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" },
+  header: { background: "linear-gradient(135deg, #1B5E20 0%, #2E7D32 60%, #388E3C 100%)", padding: "0 24px", display: "flex", justifyContent: "space-between", alignItems: "center", height: 60, boxShadow: "0 2px 12px rgba(0,0,0,0.15)" },
+  logo: { display: "flex", alignItems: "center", gap: 10 },
+  logoIcon: { width: 34, height: 34, borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 },
+  logoText: { margin: 0, fontSize: 19, fontWeight: 800, color: "#fff", letterSpacing: -0.5 },
+  logoSub: { margin: 0, fontSize: 10, color: "rgba(255,255,255,0.6)", letterSpacing: 0.5, textTransform: "uppercase" },
+  headerRight: { display: "flex", alignItems: "center", gap: 10 },
+  yearSelect: { padding: "5px 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.25)", background: "rgba(255,255,255,0.12)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  headerBtn: { padding: "5px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.25)", background: "rgba(255,255,255,0.12)", color: "#fff", fontSize: 12, cursor: "pointer", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 },
+  avatar: { width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", border: "2px solid rgba(255,255,255,0.3)", position: "relative" },
+  nav: { width: 190, padding: "16px 10px", flexShrink: 0, background: "#fff", borderRight: "1px solid #e8e8e8", minHeight: "calc(100vh - 60px)" },
+  navBtn: (active) => ({ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 14px", marginBottom: 2, borderRadius: 10, border: "none", cursor: "pointer", fontSize: 13, fontWeight: active ? 700 : 500, background: active ? "#e8f5e9" : "transparent", color: active ? "#1B5E20" : "#777", transition: "all 0.15s", textAlign: "left" }),
+  main: { flex: 1, padding: "20px 28px 40px", minWidth: 0, maxWidth: 1200 },
+  card: { background: "#fff", borderRadius: 12, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", overflow: "hidden" },
+  cardHeader: (color) => ({ padding: "12px 18px", background: color || "#1B5E20", display: "flex", justifyContent: "space-between", alignItems: "center" }),
+  cardTitle: { margin: 0, fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: 0.3 },
+  cardBody: { padding: "14px 18px" },
+  th: { textAlign: "left", padding: "8px 10px", borderBottom: "2px solid #e8f5e9", color: "#2e7d32", fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5 },
+  td: { padding: "7px 10px", borderBottom: "1px solid #f5f5f5", fontSize: 13 },
+  input: { width: "100%", padding: "8px 12px", border: "1px solid #e0e0e0", borderRadius: 8, fontSize: 14, fontFamily: "inherit", background: "#fafafa", boxSizing: "border-box" },
+  numInput: { textAlign: "right", fontVariantNumeric: "tabular-nums" },
+  greenBtn: { padding: "10px 20px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #1B5E20, #2E7D32)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 8px rgba(27,94,32,0.3)" },
+  btnPrimary: { padding: "10px 20px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #1B5E20, #2E7D32)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 8px rgba(27,94,32,0.3)" },
+  stripeBtn: { padding: "10px 20px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #635BFF, #7C3AED)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 8px rgba(99,91,255,0.3)" },
+  overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
+  modal: { background: "#fff", borderRadius: 16, width: 480, maxHeight: "90vh", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" },
+};
+
 // ─── Hijri Date Utilities ───
 const HIJRI_EPOCH = 1948439.5;
 function gregorianToJDN(y, m, d) { if (m <= 2) { y--; m += 12; } const A = Math.floor(y / 100); const B = 2 - A + Math.floor(A / 4); return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + B - 1524.5; }
@@ -1369,33 +1399,8 @@ export default function ZakatukumPreview({ initialAuthMode }) {
     setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
   };
 
-  const S = {
-    page: { minHeight: "100vh", background: "#f0f4f0", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" },
-    header: { background: "linear-gradient(135deg, #1B5E20 0%, #2E7D32 60%, #388E3C 100%)", padding: "0 24px", display: "flex", justifyContent: "space-between", alignItems: "center", height: 60, boxShadow: "0 2px 12px rgba(0,0,0,0.15)" },
-    logo: { display: "flex", alignItems: "center", gap: 10 },
-    logoIcon: { width: 34, height: 34, borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 },
-    logoText: { margin: 0, fontSize: 19, fontWeight: 800, color: "#fff", letterSpacing: -0.5 },
-    logoSub: { margin: 0, fontSize: 10, color: "rgba(255,255,255,0.6)", letterSpacing: 0.5, textTransform: "uppercase" },
-    headerRight: { display: "flex", alignItems: "center", gap: 10 },
-    yearSelect: { padding: "5px 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.25)", background: "rgba(255,255,255,0.12)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" },
-    headerBtn: { padding: "5px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.25)", background: "rgba(255,255,255,0.12)", color: "#fff", fontSize: 12, cursor: "pointer", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 },
-    avatar: { width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", border: "2px solid rgba(255,255,255,0.3)", position: "relative" },
-    nav: { width: 190, padding: "16px 10px", flexShrink: 0, background: "#fff", borderRight: "1px solid #e8e8e8", minHeight: "calc(100vh - 60px)" },
-    navBtn: (active) => ({ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 14px", marginBottom: 2, borderRadius: 10, border: "none", cursor: "pointer", fontSize: 13, fontWeight: active ? 700 : 500, background: active ? "#e8f5e9" : "transparent", color: active ? "#1B5E20" : "#777", transition: "all 0.15s", textAlign: "left" }),
-    main: { flex: 1, padding: "20px 28px 40px", minWidth: 0, maxWidth: 1200 },
-    card: { background: "#fff", borderRadius: 12, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", overflow: "hidden" },
-    cardHeader: (color) => ({ padding: "12px 18px", background: color || "#1B5E20", display: "flex", justifyContent: "space-between", alignItems: "center" }),
-    cardTitle: { margin: 0, fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: 0.3 },
-    cardBody: { padding: "14px 18px" },
-    th: { textAlign: "left", padding: "8px 10px", borderBottom: "2px solid #e8f5e9", color: "#2e7d32", fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5 },
-    td: { padding: "7px 10px", borderBottom: "1px solid #f5f5f5", fontSize: 13 },
-    input: { width: "100%", padding: "8px 12px", border: "1px solid #e0e0e0", borderRadius: 8, fontSize: 14, fontFamily: "inherit", background: "#fafafa", boxSizing: "border-box" },
-    numInput: { textAlign: "right", fontVariantNumeric: "tabular-nums" },
-    greenBtn: { padding: "10px 20px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #1B5E20, #2E7D32)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 8px rgba(27,94,32,0.3)" },
-    stripeBtn: { padding: "10px 20px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #635BFF, #7C3AED)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 8px rgba(99,91,255,0.3)" },
-    overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
-    modal: { background: "#fff", borderRadius: 16, width: 480, maxHeight: "90vh", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" },
-  };
+  // S is defined outside the component — see _S above. Alias for convenience:
+  const S = _S;
 
   // MetricCard and SectionCard are defined OUTSIDE the component (top of file)
   // to prevent focus loss on re-renders. See _MetricCard and _SectionCard above.
@@ -1854,7 +1859,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 20 }}>
                 <div style={{ ...S.card, padding: "14px 18px" }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Gold Price ({currencyInfo.symbol}/gram)</label>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Gold Price (USD/gram)</label>
                   <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
                     <NumInput value={currentYearData.goldPrice} onChange={v => updateCurrentYear("goldPrice", v)} style={{ ...S.input, ...S.numInput, flex: 1, fontSize: 20, fontWeight: 700, color: "#1B5E20", background: "#FFF8E1" }} />
                     <button onClick={() => fetchGoldPrice()} disabled={goldPriceLoading} style={{ ...S.headerBtn, background: goldPriceLoading ? "#ccc" : "#e8f5e9", color: "#2E7D32", border: "1px solid #C8E6C9", cursor: goldPriceLoading ? "wait" : "pointer", minWidth: 60 }}>{goldPriceLoading ? "..." : "⟳ Live"}</button>
