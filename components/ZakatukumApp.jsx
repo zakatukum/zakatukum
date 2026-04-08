@@ -1175,6 +1175,12 @@ export default function ZakatukumPreview({ initialAuthMode }) {
   // Handler for lock date change — fetches gold price for that date
   const handleLockDateChange = (e) => {
     const date = e.target.value;
+    // Don't allow future dates — gold price doesn't exist yet
+    const today = new Date().toISOString().split("T")[0];
+    if (date > today) {
+      addToast("Cannot set a future date — gold price is not available yet.", "error");
+      return;
+    }
     updateCurrentYear("lockDate", date);
     if (date) {
       fetchGoldPrice(date);
@@ -1868,7 +1874,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                 </div>
                 <div style={{ ...S.card, padding: "14px 18px" }}>
                   <label style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase" }}>Lock Date</label>
-                  <input type="date" value={currentYearData.lockDate || ""} onChange={handleLockDateChange} style={{ ...S.input, marginTop: 6, fontSize: 15, fontWeight: 600 }} />
+                  <input type="date" value={currentYearData.lockDate || ""} max={new Date().toISOString().split("T")[0]} onChange={handleLockDateChange} style={{ ...S.input, marginTop: 6, fontSize: 15, fontWeight: 600 }} />
                   {goldPriceLoading && <p style={{ margin: "4px 0 0", fontSize: 11, color: "#E65100", fontWeight: 600 }}>Fetching gold price...</p>}
                   {!goldPriceLoading && currentYearData.lockDate && <p style={{ margin: "4px 0 0", fontSize: 11, color: "#2E7D32", fontWeight: 600 }}>Locked: ${currentYearData.goldPrice}/g</p>}
                   {!currentYearData.lockDate && <p style={{ margin: "4px 0 0", fontSize: 12, color: "#2E7D32", fontWeight: 600 }}>{hijriToday}</p>}
