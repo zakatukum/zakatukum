@@ -46,6 +46,33 @@ function NumInput({ value, onChange, integer, placeholder, style, min }) {
   );
 }
 
+// ─── Stable sub-components (defined outside main component to prevent focus loss) ───
+const _cardStyle = { background: "#fff", borderRadius: 12, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", overflow: "hidden" };
+const _cardTitleStyle = { margin: 0, fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: 0.3 };
+const _cardBodyStyle = { padding: "14px 18px" };
+
+function MetricCard({ label, value, color, sub, borderColor }) {
+  return (
+    <div style={{ ..._cardStyle, borderLeft: `4px solid ${borderColor || color}`, padding: "16px 18px" }}>
+      <p style={{ margin: 0, fontSize: 11, color: "#999", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</p>
+      <p style={{ margin: "5px 0 0", fontSize: 24, fontWeight: 800, color, letterSpacing: -0.5 }}>{value}</p>
+      {sub && <p style={{ margin: "3px 0 0", fontSize: 12, color: "#999" }}>{sub}</p>}
+    </div>
+  );
+}
+
+function SectionCard({ title, color, children, action }) {
+  return (
+    <div style={{ ..._cardStyle, marginBottom: 16 }}>
+      <div style={{ padding: "12px 18px", background: color || "#1B5E20", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h3 style={_cardTitleStyle}>{title}</h3>
+        {action}
+      </div>
+      <div style={_cardBodyStyle}>{children}</div>
+    </div>
+  );
+}
+
 // ─── Hijri Date Utilities ───
 const HIJRI_EPOCH = 1948439.5;
 function gregorianToJDN(y, m, d) { if (m <= 2) { y--; m += 12; } const A = Math.floor(y / 100); const B = 2 - A + Math.floor(A / 4); return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + B - 1524.5; }
@@ -1370,23 +1397,8 @@ export default function ZakatukumPreview({ initialAuthMode }) {
     modal: { background: "#fff", borderRadius: 16, width: 480, maxHeight: "90vh", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" },
   };
 
-  const MetricCard = ({ label, value, color, sub, borderColor }) => (
-    <div style={{ ...S.card, borderLeft: `4px solid ${borderColor || color}`, padding: "16px 18px" }}>
-      <p style={{ margin: 0, fontSize: 11, color: "#999", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</p>
-      <p style={{ margin: "5px 0 0", fontSize: 24, fontWeight: 800, color, letterSpacing: -0.5 }}>{value}</p>
-      {sub && <p style={{ margin: "3px 0 0", fontSize: 12, color: "#999" }}>{sub}</p>}
-    </div>
-  );
-
-  const SectionCard = ({ title, color, children, action }) => (
-    <div style={{ ...S.card, marginBottom: 16 }}>
-      <div style={S.cardHeader(color)}>
-        <h3 style={S.cardTitle}>{title}</h3>
-        {action}
-      </div>
-      <div style={S.cardBody}>{children}</div>
-    </div>
-  );
+  // MetricCard and SectionCard are defined OUTSIDE the component (top of file)
+  // to prevent focus loss on re-renders. See _MetricCard and _SectionCard above.
 
   // ─── LOADING STATE (checking session) ───
   if (authChecking) {
