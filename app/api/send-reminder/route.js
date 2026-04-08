@@ -128,7 +128,7 @@ function buildReminderEmail({ type, userName, zakatSummary }) {
         ${summaryHtml}
 
         <div style="text-align: center; margin: 24px 0;">
-          <a href="https://zakatukum.vercel.app" style="display: inline-block; background: #1B5E20; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 15px;">
+          <a href="https://zakatukum.com" style="display: inline-block; background: #1B5E20; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 15px;">
             Review Your Zakat →
           </a>
         </div>
@@ -138,7 +138,7 @@ function buildReminderEmail({ type, userName, zakatSummary }) {
       <div style="padding: 20px 24px; background: #f8f9fa; border-top: 1px solid #eee; text-align: center;">
         <p style="margin: 0; color: #999; font-size: 12px; line-height: 1.5;">
           You're receiving this because you enabled zakat reminders in your
-          <a href="https://zakatukum.vercel.app" style="color: #2E7D32; text-decoration: none;">Zakatukum</a> settings.
+          <a href="https://zakatukum.com" style="color: #2E7D32; text-decoration: none;">Zakatukum</a> settings.
           <br>To unsubscribe, disable reminders in Settings → Zakat Reminders.
         </p>
       </div>

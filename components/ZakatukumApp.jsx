@@ -806,8 +806,11 @@ export default function ZakatukumPreview({ initialAuthMode }) {
   }, []);
 
   // ─── Load zakat data from Supabase when logged in ───
+  const dataLoadedRef = useRef(false);
   useEffect(() => {
     if (!isLoggedIn || !session || !supabase) return;
+    if (dataLoadedRef.current) return;
+    dataLoadedRef.current = true;
     const loadData = async () => {
       const { data, error } = await supabase
         .from("zakat_years")
@@ -887,7 +890,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
       { onConflict: "user_id,hijri_year" }
     );
     if (error) {
-      console.error("Save error:", error.message);
+      addToast("Failed to save — please try again", "error");
     }
   }, [session, userId]);
 
@@ -3631,7 +3634,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
               <div>
                 <div style={{ padding: "24px", textAlign: "center", borderBottom: "1px solid #f0f0f0" }}>
                   <p style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 800, color: "#333" }}>Select Accounts</p>
-                  <p style={{ margin: 0, fontSize: 12, color: "#999" }}>Step 4 of 5 — Choose which accounts to link</p>
+                  <p style={{ margin: 0, fontSize: 12, color: "#999" }}>Step 4 of 5 — Choose which accounts to link (demo)</p>
                 </div>
                 <div style={{ padding: "20px 24px", maxHeight: 300, overflowY: "auto" }}>
                   {[["Checking", "****XXXX", "$0"], ["Savings", "****XXXX", "$0"], ["Money Market", "****XXXX", "$0"]].map(([type, mask, bal], i) => (

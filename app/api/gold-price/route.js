@@ -27,7 +27,7 @@ export async function GET(request) {
 
     return NextResponse.json({ error: "Could not fetch gold price" }, { status: 502 });
   } catch (err) {
-    return NextResponse.json({ error: "Server error: " + err.message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch gold price" }, { status: 500 });
   }
 }
 
@@ -51,7 +51,7 @@ async function fetchLiveGoldPrice() {
     }
     return null;
   } catch (e) {
-    console.error("fetchLiveGoldPrice error:", e.message);
+    // Live gold price fetch failed — falling through to null
     return null;
   }
 }
@@ -143,7 +143,7 @@ async function fetchHistoricalGoldPrice(targetDate) {
 
     return null;
   } catch (e) {
-    console.error("fetchHistoricalGoldPrice error:", e.message);
+    // Historical gold price fetch failed — falling through to null
     return null;
   }
 }
