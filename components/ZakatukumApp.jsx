@@ -2043,8 +2043,8 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                       {currentYearData.manualEntries.goldItems.map((item, i) => (
                         <tr key={i} style={i % 2 === 0 ? { background: "#fafafa" } : {}}>
                           <td style={S.td}><input placeholder="Ring, Necklace..." value={item.name} onChange={e => { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], name: e.target.value }; updateManualEntry("goldItems", updated); }} style={{ ...S.input, padding: "4px 6px", fontSize: 12 }} /></td>
-                          <td style={S.td}><input type="text" inputMode="decimal" placeholder="0" value={item.weight != null && item.weight !== 0 ? item.weight : ""} onChange={e => { const v = e.target.value; if (v === "" || /^\d*\.?\d*$/.test(v)) { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], weight: v === "" ? 0 : parseFloat(v) || 0 }; updateManualEntry("goldItems", updated); } }} onBlur={e => { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], weight: parseFloat(e.target.value) || 0 }; updateManualEntry("goldItems", updated); }} style={{ ...S.input, ...S.numInput, padding: "4px 6px", fontSize: 12, width: 70 }} /></td>
-                          <td style={S.td}><input type="text" inputMode="numeric" placeholder="100" value={item.purity != null && item.purity !== 100 ? item.purity : ""} onChange={e => { const v = e.target.value; if (v === "" || /^\d*$/.test(v)) { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], purity: v === "" ? 100 : parseInt(v) || 100 }; updateManualEntry("goldItems", updated); } }} style={{ ...S.input, ...S.numInput, padding: "4px 6px", fontSize: 12, width: 50 }} /></td>
+                          <td style={S.td}><NumInput placeholder="0" value={item.weight} onChange={v => { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], weight: v }; updateManualEntry("goldItems", updated); }} style={{ ...S.input, ...S.numInput, padding: "4px 6px", fontSize: 12, width: 70 }} /></td>
+                          <td style={S.td}><NumInput integer placeholder="100" value={item.purity} onChange={v => { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], purity: v || 100 }; updateManualEntry("goldItems", updated); }} style={{ ...S.input, ...S.numInput, padding: "4px 6px", fontSize: 12, width: 50 }} /></td>
                           <td style={S.td}><input type="text" inputMode="decimal" placeholder="0" value={item.value || ""} onChange={e => { const v = e.target.value; if (v === "" || /^\d*\.?\d*$/.test(v)) { const updated = [...currentYearData.manualEntries.goldItems]; updated[i] = { ...updated[i], value: v }; updateManualEntry("goldItems", updated); } }} style={{ ...S.input, ...S.numInput, padding: "4px 6px", fontSize: 12, width: 80 }} /></td>
                         </tr>
                       ))}
@@ -3500,9 +3500,11 @@ export default function ZakatukumPreview({ initialAuthMode }) {
               {/* Gregorian Year Input */}
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, textTransform: "uppercase" }}>{t("gregorian_year")}</label>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={newYearInput}
-                onChange={e => setNewYearInput(e.target.value)}
+                onChange={e => { const v = e.target.value; if (v === "" || /^\d{0,4}$/.test(v)) setNewYearInput(v); }}
                 placeholder="e.g., 2025"
                 style={{ ...S.input, marginBottom: 12, fontSize: 15 }}
               />
