@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Vercel Cron — runs daily at 8:00 AM UTC
-// Checks each user's zakat_year_end date and sends the matching reminder.
+// Vercel Cron — runs daily at 8:00 AM UTC.
+// Checks each user's zakat_year_end date and sends the matching reminder email.
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
