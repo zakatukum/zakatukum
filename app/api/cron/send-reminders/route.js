@@ -18,7 +18,7 @@ export async function GET(request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceKey) {
-    return NextResponse.json({ error: "Missing server config" }, { status: 500 });
+    return NextResponse.json({ error: "Missing server config", hasUrl: !!supabaseUrl, hasKey: !!serviceKey }, { status: 500 });
   }
 
   const supabase = createClient(supabaseUrl, serviceKey);
