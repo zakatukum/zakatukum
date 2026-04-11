@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 // Called by the scheduled task or manually from admin dashboard
 export async function POST(request) {
   try {
-    const { to, subject, type, userName, zakatSummary } = await request.json();
+    const { to, subject, type, userName, zakatSummary, unsubscribeLink } = await request.json();
 
     // Validate required fields
     if (!to || !subject || !type) {
@@ -19,7 +19,7 @@ export async function POST(request) {
     const fromEmail = process.env.RESEND_FROM_EMAIL || "Zakatukum <reminders@zakatukum.com>";
 
     // Build the HTML email body
-    const html = buildReminderEmail({ type, userName, zakatSummary });
+    const html = buildReminderEmail({ type, userName, zakatSummary, unsubscribeLink });
 
     // Send via Resend API
     const res = await fetch("https://api.resend.com/emails", {
@@ -48,7 +48,7 @@ export async function POST(request) {
   }
 }
 
-function buildReminderEmail({ type, userName, zakatSummary }) {
+function buildReminderEmail({ type, userName, zakatSummary, unsubscribeLink }) {
   const name = userName || "there";
   const summary = zakatSummary || {};
 
@@ -137,9 +137,9 @@ function buildReminderEmail({ type, userName, zakatSummary }) {
       <!-- Footer -->
       <div style="padding: 20px 24px; background: #f8f9fa; border-top: 1px solid #eee; text-align: center;">
         <p style="margin: 0; color: #999; font-size: 12px; line-height: 1.5;">
-          You're receiving this because you enabled zakat reminders in your
-          <a href="https://zakatukum.com" style="color: #2E7D32; text-decoration: none;">Zakatukum</a> settings.
-          <br>To unsubscribe, disable reminders in Settings → Zakat Reminders.
+          You're receiving this because you enabled zakat reminders on
+          <a href="https://zakatukum.com" style="color: #2E7D32; text-decoration: none;">Zakatukum</a>.
+          ${unsubscribeLink ? `<br><a href="${unsubscribeLink}" style="color: #999; text-decoration: underline;">Unsubscribe from all reminders</a>` : "<br>To unsubscribe, disable reminders in Settings → Zakat Reminders."}
         </p>
       </div>
 

@@ -109,6 +109,10 @@ function gregorianToJDN(y, m, d) { if (m <= 2) { y--; m += 12; } const A = Math.
 function jdnToHijri(jdn) { const l = Math.floor(jdn - HIJRI_EPOCH) + 10632; const n = Math.floor((l - 1) / 10631); const l2 = l - 10631 * n + 354; const j = Math.floor((10985 - l2) / 5316) * Math.floor((50 * l2) / 17719) + Math.floor(l2 / 5670) * Math.floor((43 * l2) / 15238); const l3 = l2 - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) - Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29; const m = Math.floor((24 * l3) / 709); const d = l3 - Math.floor((709 * m) / 24); const y2 = 30 * n + j - 30; return { year: y2, month: m, day: d }; }
 const HIJRI_MONTHS = ["Muharram","Safar","Rabi al-Awwal","Rabi al-Thani","Jumada al-Ula","Jumada al-Thani","Rajab","Sha'ban","Ramadan","Shawwal","Dhul Qi'dah","Dhul Hijjah"];
 function getHijriString(date) { const jdn = gregorianToJDN(date.getFullYear(), date.getMonth() + 1, date.getDate()); const h = jdnToHijri(jdn); return `${h.day} ${HIJRI_MONTHS[h.month - 1]} ${h.year} AH`; }
+function hijriToJDN(y, m, d) { return Math.floor((11 * y + 3) / 30) + 354 * y + 30 * m - Math.floor((m - 1) / 2) + d + HIJRI_EPOCH - 385; }
+function jdnToGregorian(jdn) { const z = Math.floor(jdn + 0.5); const a = Math.floor((z - 1867216.25) / 36524.25); const aa = z + 1 + a - Math.floor(a / 4); const b = aa + 1524; const c = Math.floor((b - 122.1) / 365.25); const dd = Math.floor(365.25 * c); const e = Math.floor((b - dd) / 30.6001); const d = b - dd - Math.floor(30.6001 * e); const m = e < 14 ? e - 1 : e - 13; const y = m > 2 ? c - 4716 : c - 4715; return { year: y, month: m, day: d }; }
+function hijriToGregorian(hy, hm, hd) { const jdn = hijriToJDN(hy, hm, hd); return jdnToGregorian(jdn); }
+function getNextHijriMonthEnd(hijriMonth) { const now = new Date(); const h = jdnToHijri(gregorianToJDN(now.getFullYear(), now.getMonth() + 1, now.getDate())); let targetYear = h.year; if (h.month > hijriMonth || (h.month === hijriMonth && h.day > 25)) targetYear++; const lastDay = (hijriMonth % 2 === 1) ? 30 : 29; const g = hijriToGregorian(targetYear, hijriMonth, lastDay); return `${g.year}-${String(g.month).padStart(2, "0")}-${String(g.day).padStart(2, "0")}`; }
 
 // ─── Currency Definitions (40 major currencies) ───
 const CURRENCIES = [
@@ -690,6 +694,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
   const [newYearInput, setNewYearInput] = useState("");
   const [goldPriceLoading, setGoldPriceLoading] = useState(false);
   const [reminders, setReminders] = useState({ reminder_30d: false, reminder_7d: true, reminder_due: true, reminder_monthly: false });
+  const [zakatYearEnd, setZakatYearEnd] = useState("");
 
   // ─── Feedback State ───
   const [feedbackCategory, setFeedbackCategory] = useState("general");
@@ -763,6 +768,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
               if (profile.madhab) setMadhab(profile.madhab);
               if (profile.lang) setLang(profile.lang);
               if (profile.reminders) setReminders(profile.reminders);
+              if (profile.zakat_year_end) setZakatYearEnd(profile.zakat_year_end);
               if (profile.is_admin) setIsAdmin(true);
             }
           });
@@ -3009,7 +3015,31 @@ export default function ZakatukumPreview({ initialAuthMode }) {
               </SectionCard>
 
               <SectionCard title="Zakat Reminders" color="#FF6F00">
-                <p style={{ margin: "0 0 12px", fontSize: 13, color: "#666" }}>Get notified when your zakat year is approaching. We'll send a reminder to <strong>{userEmail}</strong>.</p>
+                <p style={{ margin: "0 0 12px", fontSize: 13, color: "#666" }}>Get notified when your zakat year is approaching. We'll send reminders to <strong>{userEmail}</strong>.</p>
+
+                {/* Zakat Year End Date */}
+                <div style={{ margin: "0 0 16px" }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", marginBottom: 6 }}>Your Zakat Year End Date</label>
+                  <p style={{ margin: "0 0 8px", fontSize: 12, color: "#999" }}>Set when your zakat year ends so we know when to remind you.</p>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                    {[
+                      ["End of Ramadan", () => getNextHijriMonthEnd(9)],
+                      ["End of Sha'ban", () => getNextHijriMonthEnd(8)],
+                      ["End of Dhul Hijjah", () => getNextHijriMonthEnd(12)],
+                    ].map(([label, fn]) => (
+                      <button key={label} onClick={() => setZakatYearEnd(fn())} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #ddd", background: "#f8f9fa", fontSize: 12, fontWeight: 600, color: "#555", cursor: "pointer" }}>{label}</button>
+                    ))}
+                  </div>
+                  <input
+                    type="date"
+                    value={zakatYearEnd}
+                    onChange={e => setZakatYearEnd(e.target.value)}
+                    style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", fontSize: 14, width: "100%", boxSizing: "border-box", background: "#f8f9fa" }}
+                  />
+                  {zakatYearEnd && <p style={{ margin: "6px 0 0", fontSize: 12, color: "#2E7D32" }}>Reminders will be sent relative to {new Date(zakatYearEnd + "T00:00:00").toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>}
+                </div>
+
+                {/* Reminder type checkboxes */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {[
                     ["30 days before zakat year ends", "reminder_30d"],
@@ -3025,7 +3055,12 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                 </div>
                 <button onClick={async () => {
                   if (!supabase || !userId) return;
-                  const { error } = await supabase.from("profiles").upsert({ id: userId, reminders, updated_at: new Date().toISOString() });
+                  if (!zakatYearEnd && (reminders.reminder_30d || reminders.reminder_7d || reminders.reminder_due)) {
+                    addToast("Please set your zakat year end date first", "error"); return;
+                  }
+                  const updateData = { id: userId, reminders, updated_at: new Date().toISOString() };
+                  if (zakatYearEnd) updateData.zakat_year_end = zakatYearEnd;
+                  const { error } = await supabase.from("profiles").upsert(updateData);
                   if (error) { addToast("Failed to save: " + error.message, "error"); }
                   else { addToast("Reminder preferences saved!", "success"); }
                 }} style={{ ...S.greenBtn, marginTop: 16, fontSize: 13, padding: "10px 20px" }}>Save Reminders</button>

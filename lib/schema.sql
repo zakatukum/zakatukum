@@ -12,6 +12,11 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   currency TEXT DEFAULT 'USD',
   madhab TEXT DEFAULT 'hanafi',
   lang TEXT DEFAULT 'en',
+  reminders JSONB DEFAULT '{"reminder_30d": false, "reminder_7d": true, "reminder_due": true, "reminder_monthly": false}'::jsonb,
+  zakat_year_end DATE,
+  last_reminder_sent JSONB DEFAULT '{}'::jsonb,
+  unsubscribe_token UUID DEFAULT gen_random_uuid(),
+  is_admin BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
