@@ -2963,12 +2963,48 @@ export default function ZakatukumPreview({ initialAuthMode }) {
 
               <SectionCard title="Account" color="#C62828">
                 <p style={{ margin: "0 0 12px", fontSize: 13, color: "#666" }}>Manage your account security and data.</p>
-                <div style={{ display: "flex", gap: 10 }}>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                   <button onClick={() => { setAuthMode("reset"); setIsLoggedIn(false); }} style={{ padding: "10px 20px", borderRadius: 10, border: "1px solid #E65100", background: "#FFF3E0", color: "#E65100", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Change Password</button>
                   <button onClick={async () => {
                     if (supabase) { await supabase.auth.signOut(); }
                     setSession(null); setUserId(null); setIsLoggedIn(false); setUserName(""); setUserEmail("");
                   }} style={{ padding: "10px 20px", borderRadius: 10, border: "1px solid #C62828", background: "#FFEBEE", color: "#C62828", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{t("sign_out")}</button>
+                </div>
+
+                {/* GDPR: Data Export & Deletion */}
+                <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid #eee" }}>
+                  <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 700, color: "#333" }}>Your Data</p>
+                  <p style={{ margin: "0 0 12px", fontSize: 12, color: "#888" }}>Export a copy of all your data or permanently delete your account.</p>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <button onClick={async () => {
+                      if (!session?.access_token) { addToast("Please log in first", "error"); return; }
+                      try {
+                        addToast("Preparing your data export...", "info");
+                        const res = await fetch("/api/account/export", { headers: { Authorization: "Bearer " + session.access_token } });
+                        if (!res.ok) { const d = await res.json(); addToast(d.error || "Export failed", "error"); return; }
+                        const blob = await res.blob();
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a"); a.href = url; a.download = "zakatukum-data-export-" + new Date().toISOString().split("T")[0] + ".json"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+                        addToast("Data exported successfully!", "success");
+                      } catch { addToast("Export failed — please try again", "error"); }
+                    }} style={{ padding: "10px 20px", borderRadius: 10, border: "1px solid #1565C0", background: "#E3F2FD", color: "#1565C0", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Export My Data</button>
+
+                    <button onClick={async () => {
+                      if (!session?.access_token) { addToast("Please log in first", "error"); return; }
+                      const confirmed = window.confirm("Are you sure you want to permanently delete your account and ALL data? This cannot be undone.");
+                      if (!confirmed) return;
+                      const doubleConfirm = window.confirm("This is your FINAL warning. All zakat records, payments, and your profile will be permanently erased. Continue?");
+                      if (!doubleConfirm) return;
+                      try {
+                        addToast("Deleting your account...", "info");
+                        const res = await fetch("/api/account/delete", { method: "DELETE", headers: { Authorization: "Bearer " + session.access_token, "Content-Type": "application/json" }, body: JSON.stringify({ confirm: "DELETE MY ACCOUNT" }) });
+                        const d = await res.json();
+                        if (!res.ok) { addToast(d.error || "Deletion failed", "error"); return; }
+                        setSession(null); setUserId(null); setIsLoggedIn(false); setUserName(""); setUserEmail("");
+                        addToast("Account deleted. We're sorry to see you go.", "success");
+                      } catch { addToast("Deletion failed — please try again", "error"); }
+                    }} style={{ padding: "10px 20px", borderRadius: 10, border: "1px solid #B71C1C", background: "#FFCDD2", color: "#B71C1C", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Delete My Account</button>
+                  </div>
                 </div>
               </SectionCard>
 
