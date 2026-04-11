@@ -16,10 +16,9 @@ export async function GET(request) {
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SB_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceKey) {
-    const sbKeys = Object.keys(process.env).filter(k => k.includes("SB_") || k.includes("SUPA") || k.includes("CRON")).sort();
-    return NextResponse.json({ error: "Missing server config", hasUrl: !!supabaseUrl, hasKey: !!serviceKey, envHints: sbKeys }, { status: 500 });
+    return NextResponse.json({ error: "Missing server config" }, { status: 500 });
   }
 
   const supabase = createClient(supabaseUrl, serviceKey);
