@@ -690,6 +690,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
   const [newYearInput, setNewYearInput] = useState("");
   const [goldPriceLoading, setGoldPriceLoading] = useState(false);
   const [reminders, setReminders] = useState({ reminder_30d: false, reminder_7d: true, reminder_due: true, reminder_monthly: false });
+  const [zakatYearEnd, setZakatYearEnd] = useState("");
 
   // ─── Feedback State ───
   const [feedbackCategory, setFeedbackCategory] = useState("general");
@@ -763,6 +764,7 @@ export default function ZakatukumPreview({ initialAuthMode }) {
               if (profile.madhab) setMadhab(profile.madhab);
               if (profile.lang) setLang(profile.lang);
               if (profile.reminders) setReminders(profile.reminders);
+              if (profile.zakat_year_end) setZakatYearEnd(profile.zakat_year_end);
               if (profile.is_admin) setIsAdmin(true);
             }
           });
@@ -2974,6 +2976,19 @@ export default function ZakatukumPreview({ initialAuthMode }) {
 
               <SectionCard title="Zakat Reminders" color="#FF6F00">
                 <p style={{ margin: "0 0 12px", fontSize: 13, color: "#666" }}>Get notified when your zakat year is approaching. We'll send a reminder to <strong>{userEmail}</strong>.</p>
+
+                {/* Zakat Year End Date */}
+                <div style={{ margin: "0 0 16px" }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", marginBottom: 6 }}>Zakat Year End Date</label>
+                  <p style={{ margin: "0 0 8px", fontSize: 12, color: "#999" }}>When does your current zakat year end? This is used to schedule your reminders.</p>
+                  <input
+                    type="date"
+                    value={zakatYearEnd}
+                    onChange={e => setZakatYearEnd(e.target.value)}
+                    style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", fontSize: 14, width: "100%", boxSizing: "border-box", background: "#f8f9fa" }}
+                  />
+                </div>
+
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {[
                     ["30 days before zakat year ends", "reminder_30d"],
@@ -2989,7 +3004,9 @@ export default function ZakatukumPreview({ initialAuthMode }) {
                 </div>
                 <button onClick={async () => {
                   if (!supabase || !userId) return;
-                  const { error } = await supabase.from("profiles").upsert({ id: userId, reminders, updated_at: new Date().toISOString() });
+                  const updateData = { id: userId, reminders, updated_at: new Date().toISOString() };
+                  if (zakatYearEnd) updateData.zakat_year_end = zakatYearEnd;
+                  const { error } = await supabase.from("profiles").upsert(updateData);
                   if (error) { addToast("Failed to save: " + error.message, "error"); }
                   else { addToast("Reminder preferences saved!", "success"); }
                 }} style={{ ...S.greenBtn, marginTop: 16, fontSize: 13, padding: "10px 20px" }}>Save Reminders</button>
