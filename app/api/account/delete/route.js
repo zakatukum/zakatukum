@@ -17,7 +17,7 @@ function getSupabase(request) {
 function getServiceSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
+    process.env.SB_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 }
 
@@ -55,7 +55,7 @@ export async function DELETE(request) {
       );
     }
 
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const serviceRoleKey = process.env.SB_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!serviceRoleKey) {
       return NextResponse.json(
         { error: "Service configuration error" },
